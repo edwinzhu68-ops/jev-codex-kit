@@ -1,0 +1,25 @@
+{
+  "name": "jev-codex-kit",
+  "version": "0.1.0",
+  "description": "One portable entry for Jev judgments, scoped code briefs and evidence bundles in Codex or MCP clients",
+  "type": "module",
+  "license": "MIT",
+  "engines": {"node": ">=22"},
+  "bin": {"jev-kit": "bin/jev-kit.mjs"},
+  "files": ["bin", "src", "vendor", "scripts/build.mjs", "skills", "examples", "README.md", "README.en.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "SECURITY.md", "VALIDATION.md"],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "setup": "node bin/jev-kit.mjs setup",
+    "doctor": "node bin/jev-kit.mjs doctor",
+    "start": "node bin/jev-kit.mjs serve",
+    "test": "node --test test/*.test.mjs",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@typesafe-ai/sdk": "0.6.0",
+    "zod": "4.6.5",
+    "minimatch": "10.2.6",
+    "typescript": "5.9.3"
+  }
+}

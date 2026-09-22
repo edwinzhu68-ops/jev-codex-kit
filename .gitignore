@@ -1,0 +1,12 @@
+node_modules/
+vendor/*/dist/
+*.tgz
+.env
+.env.*
+!.env.example
+*.dpapi
+config.json
+credentials.json
+runs/
+test-output/
+*.log

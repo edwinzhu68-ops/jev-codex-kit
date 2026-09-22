@@ -1,0 +1,7 @@
+{
+  "root": "/absolute/path/to/your/project",
+  "path": "src",
+  "query": "Find where expired inventory entries are removed",
+  "glob": "*.ts",
+  "max_candidates": 6
+}

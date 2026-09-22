@@ -1,0 +1,75 @@
+import { z } from "zod";
+import { parseQuestions, type QuestionInput } from "../questions.js";
+import { actionFromConfidence, actionFromNoul, confidenceSupportsAuto, minConfidence, requireCompleteContext, validatePolicyThresholds, worstAction, type PolicyAction } from "../policy.js";
+import { getConfig } from "../config.js";
+import { systemOne, type ToolContext } from "../typesafe.js";
+import { asChoice, asNoul, asScore } from "../result.js";
+
+export const questionInputSchema = z.object({
+  type: z.enum(["noul", "choice", "score"]).describe("Jev primitive"),
+  instructions: z.string().describe("One atomic question"),
+  criteria: z
+    .union([
+      z.record(z.string(), z.string().nullable()),
+      z.array(z.string()),
+      z.object({
+        true: z.string().optional(),
+        false: z.string().optional(),
+      }),
+    ])
+    .optional()
+    .describe("Choice map, score levels, or noul true/false descriptions"),
+});
+
+export const evaluateInputSchema = z.object({
+  state: z
+    .union([z.string(), z.record(z.string(), z.any()), z.array(z.any())])
+    .describe("Shared state to judge: text or JSON"),
+  questions: z
+    .record(z.string(), questionInputSchema)
+    .describe("Named noul, choice, and score questions evaluated in parallel"),
+  model: z.string().optional().describe("Override, default jev-latest"),
+});
+
+export type EvaluateInput = z.infer<typeof evaluateInputSchema>;
+
+export async function runEvaluate(input: EvaluateInput, context?: ToolContext) {
+  const config = getConfig();
+  validatePolicyThresholds(config.autoAccept, config.reviewAt);
+  const questions = parseQuestions(input.questions as Record<string, QuestionInput>);
+  const result = await systemOne({
+    state: input.state,
+    questions,
+    model: input.model,
+  }, context);
+  const confidences: number[] = [];
+  const noulActions: PolicyAction[] = [];
+  let distributionIncoherent = false;
+  for (const answer of Object.values(result.answers)) {
+    if (answer.type === "choice") {
+      const choice = asChoice(answer);
+      confidences.push(choice.confidence);
+      distributionIncoherent = distributionIncoherent || !confidenceSupportsAuto(choice.confidence, choice.probabilities, config.autoAccept);
+    } else if (answer.type === "score") {
+      const score = asScore(answer);
+      confidences.push(score.confidence);
+      distributionIncoherent = distributionIncoherent || !confidenceSupportsAuto(score.confidence, score.probabilities, config.autoAccept);
+    } else {
+      const noul = asNoul(answer).noul;
+      noulActions.push(actionFromNoul(noul, config.autoAccept, config.reviewAt));
+    }
+  }
+  let action = worstAction([
+    ...(confidences.length ? [actionFromConfidence(minConfidence(confidences), config.autoAccept, config.reviewAt)] : []),
+    ...noulActions,
+  ]);
+  if (action === "auto" && distributionIncoherent) action = "review";
+  return {
+    model: result.model,
+    answers: result.answers,
+    usage: result.usage,
+    truncated: result.truncated,
+    coverage: result.coverage,
+    action: requireCompleteContext(action, result.truncated || !result.coverage.complete),
+  };
+}

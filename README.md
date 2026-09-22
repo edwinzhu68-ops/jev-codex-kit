@@ -1,0 +1,89 @@
+# Jev Codex Kit
+
+一个入口，把 **Jev 结构化判断、源码定位简报、批量证据核对**接入 Codex。也提供标准 stdio MCP 配置，供其他 MCP 客户端使用。
+
+**你正常交代任务，Codex 按需选择工具；Jev 返回判断，Codex 负责编辑、执行和验收。** 不接管模型路由，不要求每句话调用，不启动自主编程代理。尚未证明普遍提速或成本节省。
+
+[English](README.en.md) · [使用技能](skills/jev-codex-kit/SKILL.md) · [第三方来源](THIRD_PARTY_NOTICES.md) · [数据边界](SECURITY.md)
+
+## 3 步开始
+
+准备 **Node.js 22+、ripgrep (`rg`)、自己的 TypeSafe API Key**。自动注册 Codex 还需要 `codex` CLI 在 PATH 中。API 使用可能产生 TypeSafe 费用；本项目不提供共享 Key。
+
+**Windows 简单入口：下载并解压后双击 `setup.cmd`，按提示填写项目路径和自己的 Key。** 脚本安装依赖、构建、注册 Codex 并检查状态，不需要管理员权限。macOS/Linux 可运行 `sh setup.sh`。也可以按下面步骤手动安装。
+
+1. 下载 GitHub Release 的 ZIP 并解压，或克隆本仓库。在目录中打开终端。
+2. 安装和构建：
+
+   ```sh
+   npm ci --ignore-scripts --no-audit --no-fund
+   npm run build
+   ```
+
+3. 配置你的项目并注册 Codex：
+
+   ```sh
+   npm run setup -- --root "你的项目绝对路径" --codex
+   npm run doctor
+   ```
+
+安装向导在需要时隐藏输入 API Key。Windows 使用当前用户 DPAPI 加密保存；macOS/Linux 使用用户目录中的权限 0600 文件（不加密）。也可自行设置 `TYPESAFE_API_KEY` 环境变量，不保存密钥。设置了环境变量时，启动 Codex 的进程也必须继承它。配置和回执保存在 `~/.jev-codex-kit`，不在源码仓库。
+
+`--codex` 只添加名为 `jev-kit` 的 MCP 注册和独立 `jev-codex-kit` 技能，不改其他服务或全局 AGENTS.md。同名不同配置会拒绝覆盖。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
+
+`doctor` 只做本地检查，不调用付费 API；READY 不代表模型服务或判断质量已验证。旧任务看不到工具时，可新建任务，或者使用下面的 CLI，不必打断其他正在运行的任务。
+
+## 在会话中使用
+
+正常交代任务即可。首次可以告诉 Codex：
+
+> 使用已安装的 jev-codex-kit 技能，按任务需要定位源码、整理证据或核对结论；你负责修改与真实测试。不要每步调用，不要重复判断。
+
+| 需要做什么 | 工具 |
+| --- | --- |
+| 在授权子目录中寻找相关源码 | `jev_code_brief` |
+| 收集明确文件/日志、核对证据 | `jev_prepare_evidence` |
+| 排序 / 验证声明 / 审查改动 | `jev_rank` / `jev_verify` / `jev_review` |
+| 同时审查改动和完成声明 | `jev_gate` |
+| 选择已准备好的下一步 | `jev_step` / `jev_tool_route` / `jev_coding_loop` |
+| 检查不可信文本 / 自定义原子判断 | `jev_screen` / `jev_evaluate` |
+
+精确搜索、计算、已知文件读取直接用本地工具。`auto`、`BRIEF_READY`、`EVIDENCE_READY` 都不是测试通过或执行授权。保留不确定和反证，由宿主继续处理。
+
+## 一个 CLI，也能在没有 MCP 的会话中用
+
+```sh
+node bin/jev-kit.mjs help
+node bin/jev-kit.mjs call jev_prepare_evidence examples/evidence.json result.json
+node bin/jev-kit.mjs call jev_code_brief examples/brief.json brief-result.json
+node bin/jev-kit.mjs call jev_evaluate examples/evaluate.json judgment.json
+```
+
+先把示例中的项目路径改成 setup 已授权的真实路径，源文件必须存在。输出文件必须是新路径，避免覆盖证据。`pinned` 且没有分类/检查的证据收集不调用模型；其他语义判断使用你自己的额度。两个源码工具回执包含源码片段，不能公开上传。
+
+再次授权其他项目：`npm run setup -- --root "另一个项目路径" --no-key-prompt`。只授权需要的项目目录，不能授权磁盘根目录。自定义配置目录可设 `JEV_KIT_HOME`，MCP 启动时必须使用同一环境。
+
+## 其他 MCP 客户端
+
+运行 `node bin/jev-kit.mjs config`，复制生成的 `mcpServers` 配置到客户端对应设置。它只包含 Node 和工具包绝对路径，不包含密钥。各客户端配置格式可能不同；目前不宣称 WorkBuddy/ZCode 的具体版本已完成实测。
+
+## 具体限制
+
+- 固定模型 `jev-1.13.0`，禁止单次覆盖。每次实际推理最多 20 个问题、24000 个序列化请求字符，代码拒绝超限和截断。SDK 可在截止时间内重试临时 HTTP 错误；工具包不会循环重做判断。
+- 源码简报仅在指定子目录本地发现候选，最多扫描 256 个文件、读取 2 MiB，单文件上限 256 KiB，最多返回 8 个候选。局部候选不等于完整仓库覆盖。
+- JS/TS/GDScript 支持完整选中单元，最长 4500 字符；2400 字符内可读完整小文件。Lua/Luau/Python 目前仅支持小文件整体读取；更大文件需宿主直接读取或选择明确证据片段。
+- 证据工具接受明确文件、行范围或 GDScript 函数，最多 10 个材料、8 条核对项；单文件 2 MiB，合并请求仍受字符/问题上限限制。
+- 无生成模型、无任意命令执行器、无 Foreman/JevLoop 自动接管。常见敏感字段检测不是安全沙箱；文件哈希是时点检查，不是文件锁。
+
+## 开发与验证
+
+```sh
+npm run build
+npm test
+```
+
+测试包含真实本地文件、MCP stdio、CLI、路径限制、证据保留、错误/不确定状态，以及桩响应的语义流程测试；不需要 API Key，也不调用付费服务。离线测试不能证明线上判断准确率。构建脚本转译固定上游 TypeScript 模块，并非上游完整类型检查或全部测试套件。
+
+发布验证与当前限制见 [VALIDATION.md](VALIDATION.md)。本项目为社区整合，不是 TypeSafe 或 OpenAI 官方产品。
+
+卸载：`codex mcp remove jev-kit`，再删除单独的 `~/.agents/skills/jev-codex-kit`；需要保留证据时不要删除 `~/.jev-codex-kit`。这些命令不操作其他 Jev 安装。

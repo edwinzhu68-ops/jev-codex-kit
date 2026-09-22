@@ -1,0 +1,23 @@
+# Sources and licenses
+
+## burnigtm/jev-mcp
+
+- Source: https://github.com/burnigtm/jev-mcp
+- Pinned upstream commit: `9448f6120015f2f6c6dad7137c7f234545209918`.
+- MIT; original notice preserved in `vendor/jev-mcp/LICENSE`.
+- Vendored TypeScript source provides the nine judgment recipes and TypeSafe SDK adapter. Existing local changes to `policy.ts` and `tools/evaluate.ts` preserve probability-boundary correctness without relaxing thresholds. This distribution additionally checks model and request limits before inference and rejects fitted truncation in `typesafe.ts`.
+- The kit uses its own MCP registration/CLI, not the upstream CLI entry.
+
+## tonyzdev/pijev
+
+- Source: https://github.com/tonyzdev/pijev
+- Pinned upstream commit: `0b67ff916fb9c6cadd4d939b8a7a14976252efef`.
+- MIT; original notice preserved in `vendor/pijev/LICENSE`.
+- `discovery.ts` and `decisions.ts` are copied from the pinned source. Type-only imports refer to upstream modules; the build strips them when emitting these runtime modules. Other Pi agent runtime modules are not included or installed.
+- The kit's adapter supplies complete selected source units, enforces a single bounded ranking call, preserves uncertain candidates and verifies current hashes. This is not the complete PiJev application.
+
+## Kit integration and dependencies
+
+The portable CLI, settings, MCP integration, evidence adapter, tests and documentation are distributed under MIT. See root LICENSE. Dependencies retain their own licenses; exact versions and integrity hashes are recorded in package-lock.json. No JevLoop, Foreman, user credentials, real project source or private receipts are distributed.
+
+Official API reference: https://docs.typesafe.ai/api

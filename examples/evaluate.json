@@ -1,0 +1,6 @@
+{
+  "state": {"log": "The inventory reload test was not run."},
+  "questions": {
+    "completed": {"type": "noul", "instructions": "Does state.log report that the inventory reload test executed successfully?"}
+  }
+}

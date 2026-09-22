@@ -1,0 +1,5 @@
+{
+  "task": "Collect the inventory contract without a model judgment",
+  "root": "/absolute/path/to/your/project",
+  "sources": [{"id": "contract", "path": "docs/inventory.md", "pinned": true}]
+}
