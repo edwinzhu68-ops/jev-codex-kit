@@ -2,7 +2,7 @@
 import { readFile, writeFile, mkdir, access, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { homedir } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { addRoot, readSettings, loadKey, saveKey, configureRuntime, kitHome } from '../src/settings.mjs';
@@ -12,7 +12,7 @@ const entry = fileURLToPath(import.meta.url);
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const argv = process.argv.slice(2);
 const command = argv.shift() || 'help';
-const help = `Jev Coding Kit 0.3.0 (repository/package: jev-codex-kit)
+const help = `Jev Coding Kit 0.4.0 (repository/package: jev-codex-kit)
   setup --root PATH [--client CLIENT,...] [--no-key-prompt]
                                              Authorize project and install selected clients
   Clients: codex, claude, cursor, opencode, pi, vscode, none
@@ -24,6 +24,10 @@ const help = `Jev Coding Kit 0.3.0 (repository/package: jev-codex-kit)
   skills catalog DIRECTORY NEW_CATALOG.json   Inspect direct skill folders offline
   skills suggest CATALOG.json GOAL NEW.json [--ids ID,ID]
                                              Route a bounded, fresh skill catalog
+  auto install SPEC.json                     Install silent Codex submit hook (native trust required)
+  auto status                                Read last private automatic routing status
+  ui start                                   Start bounded local API broker silently
+  ui install                                 Install the Codex UI loop skill
   help
 Use your own TypeSafe API key. Keep this installation folder after registering.
 `;
@@ -79,10 +83,34 @@ async function registerCodex() {
   const skill = path.join(target, 'SKILL.md');
   try { await writeFile(skill, content, { flag: 'wx' }); }
   catch (e) { if (e.code !== 'EEXIST' || await readFile(skill, 'utf8') !== content) throw Error('Existing skill was preserved; install the bundled skill manually if needed.'); }
-  console.log('Codex MCP registered as jev-kit; dedicated skill installed. Open a new task if current tools are stale.');
+  await installUISkill();
+  console.log('Codex MCP registered as jev-kit; dedicated skills installed. Open a new task if current tools are stale.');
+}
+async function installUISkill() {
+  const directory=path.join(homedir(),'.agents','skills','jev-ui');
+  const text=(await readFile(path.join(packageRoot,'skills','jev-ui','SKILL.md'),'utf8')).replaceAll('{{KIT_ROOT}}',packageRoot.replaceAll('\\','/')).replaceAll('file:///ABSOLUTE/KIT',pathToFileURL(packageRoot.replace(/[\\/]$/,'')).href);
+  await mkdir(directory,{recursive:true});
+  const target=path.join(directory,'SKILL.md');
+  try{await writeFile(target,text,{flag:'wx'});}catch(e){if(e.code!=='EEXIST'||await readFile(target,'utf8')!==text)throw Error('Existing jev-ui skill preserved; review an explicit upgrade.');}
+  return {skill:target};
 }
 async function main() {
   if (['help','--help','-h'].includes(command)) { console.log(help); return; }
+  if (command === 'ui' && argv.length === 1 && argv[0] === 'start') {
+    const {startUIBroker}=await import('../src/ui-broker-start.mjs');
+    console.log(JSON.stringify(await startUIBroker())); return;
+  }
+  if (command === 'ui' && argv.length === 1 && argv[0] === 'install') {console.log(JSON.stringify(await installUISkill()));return;}
+  if (command === 'auto') {
+    if (argv[0] === 'install' && argv.length === 2) {
+      const { installAuto } = await import('../src/auto-install.mjs');
+      console.log(JSON.stringify(await installAuto(JSON.parse(await readFile(argv[1], 'utf8'))), null, 2));
+    } else if (argv[0] === 'status' && argv.length === 1) {
+      try { console.log(await readFile(path.join(kitHome(), 'auto', 'last-run.json'), 'utf8')); }
+      catch (e) { if (e.code !== 'ENOENT') throw e; console.log(JSON.stringify({ status: 'NO_OBSERVED_RUN', hint: 'Installation does not prove native trust or current client support.' })); }
+    } else throw Error('Use auto install SPEC.json or auto status');
+    return;
+  }
   if (command === 'skills') {
     const [action, ...args] = argv;
     const { collectSkillCatalog, catalogInput } = await import('../src/skill-catalog.mjs');

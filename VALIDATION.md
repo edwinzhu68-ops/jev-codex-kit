@@ -1,6 +1,14 @@
 # Validation record
 
-Release candidate 0.3.0. No blanket claims about speed, savings or semantic accuracy.
+Release candidate 0.4.0. No blanket claims about speed, savings or semantic accuracy.
+
+- Local Windows: **61/61 PASS**. Adds hook installation/preservation, Windows PowerShell launch regression, routing budgets, quiet error paths, real loopback broker authorization checks, stale UI decisions, bounded browser scrolling and native adapter contract tests.
+- Actual Codex 0.153.4 hook -> real Jev -> next model input: PASS, including selection of the installed `jev-ui` skill (605 ms model route, 2,952 ms hook). Generative endpoint was a local fixture. Existing Desktop task refresh was NOT VERIFIED.
+- Actual CUA in-app browser -> real Jev -> two real clicks -> independent final AX readback: PASS. Three decisions, 1,729 ms loop, 2,111 input / 141 output tokens. See `docs/integration-map.md`.
+- Real native desktop Computer Use: BLOCKED by the current tool surface; simulated contract checks are not native execution evidence. Browser scroll has automated contract coverage but no live scroll benchmark.
+- Integration fixes: quoted Windows executable needed an explicit PowerShell invocation; CUA rejected npm/process access, so an authenticated API-only loopback broker was added. Starting that daemon inside the native submit hook timed out; the host now starts/reuses it automatically after skill routing instead. A fresh native UI-routing test passed after this correction.
+
+Historical v0.3.0 evidence:
 
 - Current local Windows suite: **44/44 PASS**, including real MCP registration of all 12 tools, required-skill zero-inference behavior, offline catalog CLI, stale catalog and overwrite rejection, schema/secret/request limits, uncertainty and failed-response handling.
 - Live skill-routing diagnostic: eight distinct synthetic tasks, fixed four-skill catalog, `jev-1.13.0`, expected result 8/8 versus lexical baseline 6/8; 2216 ms summed route time. Raw report, dataset, methodology and explicit limits are in `docs/evaluations/skill-routing-20260922.md`. No Codex workload/token reduction or coding-task speed comparison was measured.

@@ -1,5 +1,7 @@
 # Jev Coding Kit
 
+New: [quiet automatic Codex entry](docs/automatic-codex.md) and a [CUA/browser integration map](docs/integration-map.md). A real browser run completed two clicks inside one host call. Native desktop execution requires a supported runtime and remains separately unverified.
+
 One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery, evidence preparation and task-based skill suggestions (12 tools). Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
 
 New: [skill routing](docs/skill-routing.md) preserves host-required skills and offers no-match/uncertainty exits. [First diagnostic run](docs/evaluations/skill-routing-20260922.md): Jev matched 8/8 synthetic labels versus 6/8 for a simple lexical baseline. This is not a Codex performance or token-savings benchmark.

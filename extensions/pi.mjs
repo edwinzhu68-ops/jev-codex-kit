@@ -12,7 +12,7 @@ export async function attachPi(pi,{kitHome}={}) {
   async function connection(){
     if(client)return client;
     if(!opening)opening=(async()=>{
-      const candidate=new Client({name:'jev-kit-pi',version:'0.3.0'});
+      const candidate=new Client({name:'jev-kit-pi',version:'0.4.0'});
       const env={...process.env,...(kitHome?{JEV_KIT_HOME:kitHome}:{})};
       const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../bin/jev-kit.mjs',import.meta.url)),'serve'],env,stderr:'pipe'});
       transport.stderr?.on('data',()=>{});

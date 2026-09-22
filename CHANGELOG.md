@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- Optional native Codex UserPromptSubmit hook, bounded routing, private receipts and quiet fail-open behavior; Windows shell-compatible launcher.
+- CUA UI session for fresh observed clicks and browser scrolling, with independent final verification and host handoffs.
+- Local authenticated API-only broker for the restricted CUA import runtime; no alternative browser driver or plaintext API key.
+- Codex UI skill and explicit desktop/browser/source-integration evidence boundaries.
+
 ## 0.3.0
 
 - Add `jev_route_skills`, available through the same MCP, Pi and CLI interfaces.

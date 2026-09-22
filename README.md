@@ -1,5 +1,7 @@
 # Jev Coding Kit
 
+新增：[自动静默入口](docs/automatic-codex.md)和[Computer Use / 浏览器整合说明](docs/integration-map.md)。浏览器已实测一次调用连续完成两次点击；桌面原生操作仍需兼容运行环境，不能用浏览器结果代替验收。
+
 一个入口，把 **Jev 结构化判断、源码定位简报、批量证据核对**接入 Codex、Claude Code、Cursor、OpenCode、Pi 和 VS Code。仓库和技能标识保留 `jev-codex-kit`，方便现有用户升级。
 
 编码助手可以先收集限定范围内的源码和日志，按需用 Jev 筛选、核对，再拿着完整材料、源码哈希和反证继续工作。它减少重复整理材料的机会；实际提速仍需针对任务测量。
