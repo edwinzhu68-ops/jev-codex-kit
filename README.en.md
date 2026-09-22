@@ -1,6 +1,8 @@
-# Jev Codex Kit
+# Jev Coding Kit
 
 One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery and evidence preparation. Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
+
+Installers support Codex, Claude Code, Cursor, OpenCode, Pi and VS Code. Pi uses a native extension backed by the same server. Repository/package/skill identifiers remain `jev-codex-kit`. [Client setup and verification boundaries](docs/clients.md) · [Contributing](CONTRIBUTING.md) · [Latest release](https://github.com/edwinzhu68-ops/jev-codex-kit/releases/latest).
 
 ## Install
 
@@ -11,7 +13,7 @@ Download the release ZIP or clone this repository, then run:
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
 npm run build
-npm run setup -- --root "/absolute/project/path" --codex
+npm run setup -- --root "/absolute/project/path" --client codex
 npm run doctor
 ```
 

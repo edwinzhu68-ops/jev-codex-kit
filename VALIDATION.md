@@ -1,6 +1,12 @@
 # Validation record
 
-Release candidate 0.1.0. No blanket claims about speed, savings or semantic accuracy.
+Release candidate 0.2.0. No blanket claims about speed, savings or semantic accuracy.
+
+- Current local Windows suite: **33/33 PASS**, including the final local release check. New cases cover client dialects, secret-free config export, JSONC preservation/backups, conflict preflight, scoped installation paths and the Pi adapter using an actual MCP subprocess. See the release commit CI for platform results.
+- Real Claude Code 2.1.172 (`mcp get`) and OpenCode 1.18.14 (`mcp list`) connected to the generated registrations in isolated config directories. No paid model task was run and existing client registrations were not edited.
+- Client registration tests do not prove each desktop client's behavior. The current matrix in docs/clients.md states what was and was not tested. macOS Finder launch is not verified by shell/Node CI.
+
+Historical v0.1.0 evidence:
 
 - Final local Windows suite: **26/26 PASS**, including DPAPI, actual stdio and CLI. A real Codex CLI was also registered twice successfully in an isolated user/config home; other registrations were not changed.
 - One bounded live call through the distributed CLI used public synthetic text stating a test was not run. `jev-1.13.0` returned Noul .02 for successful execution, complete coverage, 292 input / 20 output tokens. This is a connection/one-case check, not general accuracy evidence. No credential or local receipt is included in the repository.

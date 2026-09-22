@@ -6,17 +6,21 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { addRoot, readSettings, loadKey, saveKey, configureRuntime, kitHome } from '../src/settings.mjs';
+import { clientConfig, installClient, skillContent, serverSpec } from '../src/clients.mjs';
 
 const entry = fileURLToPath(import.meta.url);
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const argv = process.argv.slice(2);
 const command = argv.shift() || 'help';
-const help = `Jev Codex Kit 0.1.0
-  setup --root PATH [--codex] [--no-key-prompt]  Authorize a project; optionally register Codex and install skill
+const help = `Jev Coding Kit 0.2.0 (repository/package: jev-codex-kit)
+  setup --root PATH [--client CLIENT,...] [--no-key-prompt]
+                                             Authorize project and install selected clients
+  Clients: codex, claude, cursor, opencode, pi, vscode, none
+  --codex                                    Compatibility alias for --client codex
   doctor                                      Local checks only; no paid request
   serve                                       Start stdio MCP with all 11 tools
   call TOOL INPUT.json NEW_OUTPUT.json         Invoke one tool; refuse existing output
-  config                                      Print portable MCP configuration (no key)
+  config [--client CLIENT]                     Export client-specific configuration (no key)
   help
 Use your own TypeSafe API key. Keep this installation folder after registering.
 `;
@@ -30,7 +34,6 @@ function runCodex(args) {
   }
   return spawnSync('codex', args, { encoding: 'utf8', timeout: 15000 });
 }
-function mcpConfig() { return { mcpServers: { 'jev-kit': { command: process.execPath, args: [entry, 'serve'] } } }; }
 async function hiddenKey() {
   if (!process.stdin.isTTY || !process.stdin.setRawMode) throw Error('Set TYPESAFE_API_KEY or run setup in an interactive terminal.');
   process.stdout.write('TypeSafe API Key (hidden; Enter skips): ');
@@ -54,6 +57,7 @@ async function hiddenKey() {
   });
 }
 async function registerCodex() {
+  const spec = serverSpec();
   const version = runCodex(['--version']);
   if (version.status !== 0) throw Error('Codex CLI not found. Run config for a manual MCP entry.');
   await mkdir(process.env.CODEX_HOME || path.join(homedir(), '.codex'), { recursive: true });
@@ -61,13 +65,14 @@ async function registerCodex() {
   if (existing.status === 0) {
     const data = JSON.parse(existing.stdout);
     if (data.transport?.command !== process.execPath || JSON.stringify(data.transport?.args) !== JSON.stringify([entry, 'serve'])) throw Error('A different jev-kit registration exists. It was not overwritten.');
+    if ((data.transport?.env?.JEV_KIT_HOME || undefined) !== spec.env?.JEV_KIT_HOME) throw Error('Existing Codex storage configuration differs; merge config --client codex manually.');
   } else {
-    const added = runCodex(['mcp', 'add', 'jev-kit', '--', process.execPath, entry, 'serve']);
+    const added = runCodex(['mcp', 'add', 'jev-kit', ...(spec.env ? ['--env', 'JEV_KIT_HOME=' + spec.env.JEV_KIT_HOME] : []), '--', process.execPath, entry, 'serve']);
     if (added.status !== 0) throw Error('Codex registration failed. Run config for a manual MCP entry.');
   }
   const target = path.join(homedir(), '.agents', 'skills', 'jev-codex-kit');
   await mkdir(target, { recursive: true });
-  const content = (await readFile(path.join(packageRoot, 'skills', 'jev-codex-kit', 'SKILL.md'), 'utf8')).replaceAll('__KIT_ENTRY__', entry.replaceAll('\\', '/'));
+  const content = await skillContent();
   const skill = path.join(target, 'SKILL.md');
   try { await writeFile(skill, content, { flag: 'wx' }); }
   catch (e) { if (e.code !== 'EEXIST' || await readFile(skill, 'utf8') !== content) throw Error('Existing skill was preserved; install the bundled skill manually if needed.'); }
@@ -75,10 +80,26 @@ async function registerCodex() {
 }
 async function main() {
   if (['help','--help','-h'].includes(command)) { console.log(help); return; }
-  if (command === 'config') { console.log(JSON.stringify(mcpConfig(), null, 2)); return; }
+  if (command === 'config') {
+    if(argv.length && (argv.length!==2||argv[0]!=='--client'))throw Error('config [--client CLIENT]');
+    const client=option('--client')||'generic',config=clientConfig(client);
+    if(client==='codex'){
+      const spec=config.mcp_servers['jev-kit'];
+      console.log('[mcp_servers.jev-kit]\ncommand = '+JSON.stringify(spec.command)+'\nargs = '+JSON.stringify(spec.args)+(spec.env?'\n[mcp_servers.jev-kit.env]\nJEV_KIT_HOME = '+JSON.stringify(spec.env.JEV_KIT_HOME):''));
+    }else console.log(JSON.stringify(config,null,2));
+    return;
+  }
   if (command === 'setup') {
-    const known = new Set(['--root','--codex','--no-key-prompt']);
-    for (let i = 0; i < argv.length; i++) { if (!known.has(argv[i])) throw Error('Unknown setup option'); if (argv[i] === '--root') i++; }
+    const known = new Set(['--root','--client','--codex','--no-key-prompt']);
+    for (let i = 0; i < argv.length; i++) { if (!known.has(argv[i])) throw Error('Unknown setup option'); if (['--root','--client'].includes(argv[i])) {if(!argv[i+1]||argv[i+1].startsWith('--'))throw Error('Missing option value');i++;} }
+    if(argv.includes('--codex')&&argv.includes('--client'))throw Error('Use --client or --codex, not both.');
+    let selected=argv.includes('--codex')?'codex':option('--client');
+    if(!selected&&process.stdin.isTTY){
+      const rl=createInterface({input:process.stdin,output:process.stdout});
+      try{selected=(await rl.question('Coding tool [codex/claude/cursor/opencode/pi/vscode/none; comma-separated, default codex]: ')).trim()||'codex';}finally{rl.close();}
+    }
+    const clients=[...new Set((selected||'none').split(',').map(s=>s.trim().toLowerCase()))];
+    if(clients.some(c=>!['none','codex','claude','cursor','opencode','pi','vscode'].includes(c))||(clients.includes('none')&&clients.length>1))throw Error('Invalid client selection. Use codex, claude, cursor, opencode, pi, vscode, or none.');
     let root = option('--root');
     if (!root && process.stdin.isTTY) {
       const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -90,7 +111,11 @@ async function main() {
       console.log('Credentials: Windows uses current-user DPAPI; macOS/Linux use a local mode-0600 file outside the project. Alternatively set TYPESAFE_API_KEY.');
       const key = await hiddenKey(); if (key) await saveKey(key);
     }
-    if (argv.includes('--codex')) await registerCodex();
+    for(const client of clients){
+      if(client==='none')continue;
+      if(client==='codex')await registerCodex();
+      else console.log(JSON.stringify(await installClient(client,{root:await realpath(root)})));
+    }
     console.log('Setup saved in ' + kitHome() + '. Run doctor to check it.');
     return;
   }

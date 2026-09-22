@@ -1,6 +1,10 @@
-# Jev Codex Kit
+# Jev Coding Kit
 
-一个入口，把 **Jev 结构化判断、源码定位简报、批量证据核对**接入 Codex。也提供标准 stdio MCP 配置，供其他 MCP 客户端使用。
+一个入口，把 **Jev 结构化判断、源码定位简报、批量证据核对**接入 Codex、Claude Code、Cursor、OpenCode、Pi 和 VS Code。仓库和技能标识保留 `jev-codex-kit`，方便现有用户升级。
+
+编码助手可以先收集限定范围内的源码和日志，按需用 Jev 筛选、核对，再拿着完整材料、源码哈希和反证继续工作。它减少重复整理材料的机会；实际提速仍需针对任务测量。
+
+[下载最新版](https://github.com/edwinzhu68-ops/jev-codex-kit/releases/latest) · [各客户端安装与兼容性边界](docs/clients.md) · [参与贡献](CONTRIBUTING.md)
 
 **你正常交代任务，Codex 按需选择工具；Jev 返回判断，Codex 负责编辑、执行和验收。** 不接管模型路由，不要求每句话调用，不启动自主编程代理。尚未证明普遍提速或成本节省。
 
@@ -10,7 +14,7 @@
 
 准备 **Node.js 22+、ripgrep (`rg`)、自己的 TypeSafe API Key**。自动注册 Codex 还需要 `codex` CLI 在 PATH 中。API 使用可能产生 TypeSafe 费用；本项目不提供共享 Key。
 
-**Windows 简单入口：下载并解压后双击 `setup.cmd`，按提示填写项目路径和自己的 Key。** 脚本安装依赖、构建、注册 Codex 并检查状态，不需要管理员权限。macOS/Linux 可运行 `sh setup.sh`。也可以按下面步骤手动安装。
+**Windows：下载并解压后双击 `setup.cmd`，选择编码工具，填写项目路径和自己的 Key。** 脚本安装依赖、构建、注册所选客户端并检查状态。macOS/Linux 在解压目录运行 `sh setup.sh`；macOS 也提供 `setup.command`，但 Finder 双击体验尚未实机验证。
 
 1. 下载 GitHub Release 的 ZIP 并解压，或克隆本仓库。在目录中打开终端。
 2. 安装和构建：
@@ -20,10 +24,10 @@
    npm run build
    ```
 
-3. 配置你的项目并注册 Codex：
+3. 配置项目并注册客户端；把 `codex` 换成 `claude`、`cursor`、`opencode`、`pi` 或 `vscode`，逗号分隔可选多个：
 
    ```sh
-   npm run setup -- --root "你的项目绝对路径" --codex
+   npm run setup -- --root "你的项目绝对路径" --client codex
    npm run doctor
    ```
 
@@ -65,7 +69,7 @@ node bin/jev-kit.mjs call jev_evaluate examples/evaluate.json judgment.json
 
 ## 其他 MCP 客户端
 
-运行 `node bin/jev-kit.mjs config`，复制生成的 `mcpServers` 配置到客户端对应设置。它只包含 Node 和工具包绝对路径，不包含密钥。各客户端配置格式可能不同；目前不宣称 WorkBuddy/ZCode 的具体版本已完成实测。
+运行 `node bin/jev-kit.mjs config --client cursor` 导出相应格式；也支持 `claude`、`codex`、`opencode`、`vscode`、`windsurf` 和 `generic`。Pi 使用原生扩展，安装后 `/jev-status` 检查连接且不调用模型。配置不包含密钥。WorkBuddy/ZCode 请按其当前 MCP 文档适配，不宣称具体版本已完成实测。详细路径、升级和卸载见 [客户端说明](docs/clients.md)。
 
 ## 具体限制
 

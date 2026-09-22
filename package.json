@@ -1,12 +1,33 @@
 {
   "name": "jev-codex-kit",
-  "version": "0.1.0",
-  "description": "One portable entry for Jev judgments, scoped code briefs and evidence bundles in Codex or MCP clients",
+  "version": "0.2.0",
+  "description": "Jev tools for Codex, Claude Code, Cursor, OpenCode, Pi and other coding clients",
   "type": "module",
   "license": "MIT",
-  "engines": {"node": ">=22"},
-  "bin": {"jev-kit": "bin/jev-kit.mjs"},
-  "files": ["bin", "src", "vendor", "scripts/build.mjs", "skills", "examples", "README.md", "README.en.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "SECURITY.md", "VALIDATION.md"],
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "jev-kit": "bin/jev-kit.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "vendor",
+    "extensions",
+    "docs",
+    "scripts/build.mjs",
+    "skills",
+    "examples",
+    "README.md",
+    "README.en.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "SECURITY.md",
+    "VALIDATION.md"
+  ],
   "scripts": {
     "build": "node scripts/build.mjs",
     "setup": "node bin/jev-kit.mjs setup",
@@ -18,8 +39,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
     "@typesafe-ai/sdk": "0.6.0",
-    "zod": "4.6.5",
+    "jsonc-parser": "3.3.1",
     "minimatch": "10.2.6",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "zod": "4.6.5"
   }
 }

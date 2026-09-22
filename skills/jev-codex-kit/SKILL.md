@@ -3,7 +3,9 @@ name: jev-codex-kit
 description: Locate relevant source within an authorized directory, prepare source-linked evidence bundles, and call typed Jev review/ranking/verification tools from the jev-kit MCP server. Jev judges; the host edits and tests.
 ---
 
-# Jev Codex Kit
+# Jev Coding Kit
+
+For Codex, Claude Code, Cursor, OpenCode, Pi and other coding hosts. The repository/package and skill identifier remain `jev-codex-kit` for compatibility. Pi uses a native extension; other clients use stdio MCP. Hosts may prefix MCP tool names with the server name. Pi provides `/jev-status` to check its MCP bridge without a model request.
 
 Select one route based on the task. Exact search, math and predetermined reads use local tools.
 

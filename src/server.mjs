@@ -4,7 +4,7 @@ import { toolCatalog, executeTool } from './tools.mjs';
 
 export async function serve() {
   const catalog = await toolCatalog();
-  const server = new McpServer({ name: 'jev-codex-kit', version: '0.1.0' });
+  const server = new McpServer({ name: 'jev-codex-kit', version: '0.2.0' });
   for (const [name, tool] of catalog) server.registerTool(name, {
     description: tool.description,
     inputSchema: tool.schema,

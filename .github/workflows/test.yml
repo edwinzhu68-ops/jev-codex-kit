@@ -26,4 +26,7 @@ jobs:
         run: choco install ripgrep -y --no-progress
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run build
+      - name: Validate shell launchers
+        if: runner.os != 'Windows'
+        run: sh -n setup.sh && sh -n setup.command
       - run: npm test

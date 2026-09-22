@@ -9,11 +9,11 @@ call npm ci --ignore-scripts --no-audit --no-fund
 if errorlevel 1 goto failed
 call npm run build
 if errorlevel 1 goto failed
-node bin/jev-kit.mjs setup --codex
+node bin/jev-kit.mjs setup
 if errorlevel 1 goto failed
 node bin/jev-kit.mjs doctor
 if errorlevel 1 goto failed
-echo Setup complete. Keep this folder. Open a new Codex task to load the tools.
+echo Setup complete. Keep this folder. Reload tools or open a new task in your coding client.
 pause
 exit /b 0
 :missing
