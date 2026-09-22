@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { installAuto, commandQuote, hookCommand } from '../src/auto-install.mjs';
+import { installAuto, commandQuote, hookCommand, refreshAuto, setAutoEnabled, uninstallAuto } from '../src/auto-install.mjs';
 import { runAutoHook, eligiblePrompt, withinRoot } from '../src/auto-hook.mjs';
 
 async function fixture() {
@@ -33,7 +33,7 @@ test('installation preserves other hooks and backs up bytes; never grants trust'
 });
 
 test('continuations, secrets, code blocks, oversized inputs and arithmetic skip locally', () => {
-  for (const value of ['继续', '可以。', 'go ahead', '2+2', '```code```', 'apikey_' + 'a'.repeat(30), 'password="abcdefgh"', 'person@example.com', 'x'.repeat(1801), null]) assert.equal(eligiblePrompt(value), false);
+  for (const value of ['等等','等一下','停止','暂停','wait','stop','修好','继续', '可以。', 'go ahead', '2+2', '```code```', 'apikey_' + 'a'.repeat(30), 'password="abcdefgh"', 'person@example.com', 'x'.repeat(1801), null]) assert.equal(eligiblePrompt(value), false);
   assert(eligiblePrompt('Review the patch for regressions'));
   assert(withinRoot(path.join(os.tmpdir(), 'a', 'b'), [path.join(os.tmpdir(), 'a')]));
   assert(!withinRoot(path.join(os.tmpdir(), 'ab'), [path.join(os.tmpdir(), 'a')]));
@@ -51,22 +51,24 @@ test('automatic hook makes one call, injects only opaque ID, and never replays s
   assert.equal(calls, 1);
 });
 
-test('error or uncertain result stops that session; no-match does not approve anything', async () => {
+test('error or uncertainty blocks only unchanged judgment, not subsequent new tasks', async () => {
   for (const status of ['ERROR', 'REVIEW_REQUIRED', 'NO_MATCH']) {
     const f = await fixture(); let calls = 0;
     const deps = { configure: async () => {}, route: async () => { calls++; if (status === 'ERROR') throw Error('private provider text'); return { status }; } };
     assert.equal(await runAutoHook(f.event, f.installed.config_file, deps), null);
+    await runAutoHook(f.event, f.installed.config_file, deps);
+    assert.equal(calls,1);
     await runAutoHook({ ...f.event, prompt: 'Review a different patch for bugs' }, f.installed.config_file, deps);
-    assert.equal(calls, status === 'NO_MATCH' ? 2 : 1);
+    assert.equal(calls,2);
     assert(!(await readFile(path.join(path.dirname(f.installed.config_file), 'last-run.json'), 'utf8')).includes('private provider'));
   }
 });
 
-test('session and daily caps are reservations, not a model confidence decision', async () => {
+test('distinct prompts continue beyond old per-session and daily counters', async () => {
   const f = await fixture(); let calls = 0;
   const deps = { configure: async () => {}, route: async () => { calls++; return { status: 'NO_MATCH' }; } };
   for (let s = 0; s < 6; s++) for (let n = 0; n < 7; n++) await runAutoHook({ ...f.event, session_id: 's' + s, prompt: 'Review code change number ' + n }, f.installed.config_file, deps);
-  assert.equal(calls, 30);
+  assert.equal(calls, 42);
 });
 
 test('stale skill and outside-root tasks never reach the model', async () => {
@@ -74,8 +76,51 @@ test('stale skill and outside-root tasks never reach the model', async () => {
   const deps = { configure: async () => {}, route: async () => { calls++; } };
   assert.equal(await runAutoHook({ ...f.event, cwd: path.dirname(f.root) }, f.installed.config_file, deps), null);
   await writeFile(f.skill, 'changed');
-  await assert.rejects(runAutoHook(f.event, f.installed.config_file, deps), /STALE/);
+  assert.equal(await runAutoHook(f.event, f.installed.config_file, deps),null);
+  assert.equal(JSON.parse(await readFile(path.join(path.dirname(f.installed.config_file),'last-run.json'))).status,'STALE_SKILLS');
   assert.equal(calls, 0);
+});
+
+test('refresh, disable, enable and removal preserve receipts, decisions and unrelated hooks',async()=>{
+  const f=await fixture(),home=path.dirname(path.dirname(f.installed.config_file));
+  let calls=0;const deps={configure:async()=>{},route:async input=>{calls++;return {status:'SUGGESTED',recommendation:input.candidates[0]};}};
+  await runAutoHook(f.event,f.installed.config_file,deps);
+  await writeFile(f.skill,(await readFile(f.skill,'utf8'))+'\nUpdated instructions.');
+  await runAutoHook({...f.event,prompt:'Review another patch'},f.installed.config_file,deps);
+  assert.equal(JSON.parse(await readFile(path.join(home,'auto','last-run.json'))).status,'STALE_SKILLS');
+  const refreshed=await refreshAuto({home});assert.equal(refreshed.status,'REFRESHED');assert(refreshed.backup);
+  await setAutoEnabled(false,{home});await runAutoHook({...f.event,prompt:'Review after disabling'},f.installed.config_file,deps);assert.equal(calls,1);
+  await setAutoEnabled(true,{home});await runAutoHook({...f.event,prompt:'Review another patch'},f.installed.config_file,deps);assert.equal(calls,2);
+  assert.equal((await uninstallAuto({home,codexHome:path.dirname(f.installed.hook_file)})).status,'REMOVED');
+  const hooks=JSON.parse(await readFile(f.installed.hook_file));assert.deepEqual(hooks.hooks.Stop,f.original.hooks.Stop);assert.equal(hooks.hooks.UserPromptSubmit.length,0);
+  assert.equal((await uninstallAuto({home,codexHome:path.dirname(f.installed.hook_file)})).status,'NOT_INSTALLED');
+});
+
+test('old stopped sessions migrate without replaying prior failed prompts',async()=>{
+  const f=await fixture();const {hashText}=await import('../src/skill-router.mjs');
+  const old={day:'2026-09-22',count:30,sessions:{[hashText(f.event.session_id)]:{count:6,stopped:true,goals:[hashText(f.event.prompt)]}}};
+  const file=path.join(path.dirname(f.installed.config_file),'state.json');await writeFile(file,JSON.stringify(old));
+  let calls=0;const deps={configure:async()=>{},route:async()=>{calls++;return {status:'NO_MATCH'};}};
+  await runAutoHook(f.event,f.installed.config_file,deps);assert.equal(calls,0);
+  await runAutoHook({...f.event,prompt:'Review a new current task'},f.installed.config_file,deps);assert.equal(calls,1);
+  assert.deepEqual(JSON.parse(await readFile(file)),old);
+});
+
+test('uncertain selected skill reaches host as review evidence, never automatic approval',async()=>{
+ const f=await fixture();const result=await runAutoHook(f.event,f.installed.config_file,{configure:async()=>{},route:async i=>({status:'REVIEW_REQUIRED',recommendation:null,selection:{choice:i.candidates[0].id}})});
+ assert.match(result.hookSpecificOutput.additionalContext,/REVIEW_REQUIRED, not an accepted recommendation/);
+ assert.match(result.hookSpecificOutput.additionalContext,/confirm the skill is available and applicable/);
+ assert(!('decision' in result));
+});
+
+test('independent simultaneous task receipts remain readable and do not lose reservations',async()=>{
+ const f=await fixture();let calls=0;const events=['one','two','three'].map(session_id=>({...f.event,session_id}));
+ const deps={configure:async()=>{},route:async()=>{calls++;await new Promise(r=>setTimeout(r,5));return {status:'NO_MATCH'};}};
+  await Promise.all(events.map(e=>runAutoHook(e,f.installed.config_file,deps)));
+  const {autoStatus}=await import('../src/auto-status.mjs');const home=path.dirname(path.dirname(f.installed.config_file));
+  assert.equal(calls,3);assert.equal((await autoStatus(home)).status,'NO_MATCH');
+  for(const e of events)assert.equal((await autoStatus(home,e.session_id)).status,'NO_MATCH');
+ await Promise.all(events.map(e=>runAutoHook(e,f.installed.config_file,deps)));assert.equal(calls,3);
 });
 
 test('canonical scope accepts aliases of approved roots and rejects junction escapes',async()=>{

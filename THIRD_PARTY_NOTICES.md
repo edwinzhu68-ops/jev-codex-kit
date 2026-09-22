@@ -22,13 +22,16 @@ The portable CLI, settings, MCP integration, evidence adapter, tests and documen
 
 Official API reference: https://docs.typesafe.ai/api
 
-## UI loop design references (independent implementation)
+## UI source reuse and design references
 
-- Sac-Y/Jev-cu, MIT, revision `52d32ac24e2cea29c63d9d7c4bd6d4c401111f56`: observed desktop controls, host execution, local policy and independent outcome checks.
-- wy-coliney/jev-browser-use, MIT, revision `f14b60e0ae1ee90cd73eb6650e30a666a84c021a`: existing CUA connection, named browser actions, history and handoffs.
+- Sac-Y/Jev-cu, MIT, revision `52d32ac24e2cea29c63d9d7c4bd6d4c401111f56`: ROLES, ROLE_ALIASES and parseAX extracted from scripts/loop.mjs into vendor/jev-cu/parse-ax.mjs. Original license retained there. These definitions/functions are unchanged; app drivers and policy allowlists are not copied.
+- wy-coliney/jev-browser-use, MIT, revision `f14b60e0ae1ee90cd73eb6650e30a666a84c021a`: bridge.mjs is copied unchanged in vendor/jev-browser-use with its license. The kit directly uses availableActions for fresh browser click candidates. Its credential loader, looser thresholds, automatic retries and run/reset entry points are not the kit's entry points.
 - browser-use/jev-ultrafast, MIT, revision `1231850a0bf1a0c0341fe408ef1668dbbfdfac46`: indexed action space, one request per decision, separate text generation and action execution.
 
-Their implementations, media and benchmark claims are not bundled or represented as this kit's results. See `docs/integration-map.md` for adopted mechanisms and unsupported parts.
+The kit's orchestrator and Windows sky adapter enforce host scope, pinned model,
+bounded transport, no uncertain mutation replay and independent verification.
+Upstream media and benchmark claims are not represented as this kit's results.
+See `docs/integration-map.md` for adopted mechanisms and unsupported parts.
 
 ## Skill routing design references
 

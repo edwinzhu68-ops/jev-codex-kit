@@ -1,6 +1,7 @@
 # Automatic, quiet Codex skill routing
 
-The optional native `UserPromptSubmit` hook starts on normal user messages. After
+The native `UserPromptSubmit` hook starts on normal user messages. Codex setup
+installs it together with the two dedicated skills. It can be disabled. After
 one-time setup and native Codex trust, users do not name Jev, start a terminal,
 or manually run a router for each task. Jev recommends a skill; Codex still owns
 reading the skill, execution, evidence gathering and acceptance. This does not
@@ -9,9 +10,11 @@ turn Jev into a code generator or autonomous executor.
 ## Setup
 
 Use Node 22+ and a Codex version supporting `UserPromptSubmit` (the integration
-was developed against CLI 0.153.4). Configure your key with the kit's normal setup
-first. Create a local specification containing only authorized project roots and
-the explicit installed skills you want considered:
+was developed against CLI 0.153.4). Normal `setup --root PATH --client codex`
+installs a new hook with the coding and UI skills. For an existing custom catalog,
+keep its selected scope; `setup --upgrade` refreshes its selected skill pins.
+To install the hook separately, create a local specification containing only
+authorized project roots and the explicit installed skills you want considered:
 
 ```json
 {
@@ -44,23 +47,30 @@ running Desktop task loaded the hook. Check an actual next-task hook receipt.
 - Eligible current prompt plus full descriptions of 1-19 selected skills goes to
   TypeSafe. No transcript, skill body, repository source, or arbitrary directory
   scan is sent. This is a curated candidate scope, not the client's full registry.
-- Empty input, common continuation/confirmation messages, arithmetic-only input,
+- Empty input, common continuation/confirmation/stop messages, arithmetic-only input,
   code blocks, prompts over 1,800 characters, and common sensitive patterns skip
   locally. Pattern filtering is not a guarantee of personal-data removal; enable
   only in projects where sending eligible task descriptions is authorized.
 - Current task context stays with Codex. A standalone prompt is not the whole
   conversation; this hook cannot resolve all ambiguous follow-ups. Recommendations
   never override explicit required skills or project restrictions.
-- One workflow request per eligible, new prompt; at most six per session per UTC
-  day and thirty across sessions per UTC day. Identical prompts are not replayed.
-  SDK transport retries may occur within the deadline; these are workflow counts,
-  not a billing or exact HTTP-request guarantee.
+- One workflow request per eligible new prompt/catalog combination. There is no
+  six-per-task or thirty-per-day counter. Those v0.4.0 numbers were local policy,
+  not provider quotas. Attempted unchanged judgments are not replayed. Legacy
+  attempted prompt hashes remain blocked during migration; old receipts survive.
+  SDK transport retries may occur within the deadline, so one workflow is not
+  an exact HTTP-request or billing guarantee.
 - Five-second inference timeout, eight-second handler watchdog, twelve-second
   native hook deadline. SDK/credential startup adds overhead; no zero-latency or
-  end-to-end speedup claim is made. A concurrent handler skips rather than queues.
-- Failure or uncertain judgment stops further routing for that session that day.
-  Codex continues. No match emits nothing. Changed skill bytes fail open until the
-  catalog is explicitly refreshed; there is no silent trust refresh.
+  end-to-end speedup claim is made. Concurrent handlers in the same task skip;
+  separate tasks use separate locks and decision records.
+- Failure or uncertainty affects that unchanged decision, not the whole task/day.
+  If an uncertain result names a valid candidate, the host receives an explicit
+  REVIEW_REQUIRED advisory to inspect it, not an accepted skill recommendation.
+  No-match without a candidate and errors do not inject a made-up selection.
+  Codex continues. No match emits nothing. Changed skill bytes record STALE_SKILLS
+  and emit no suggestion until an explicit `auto refresh`; a previous SUGGESTED
+  result is not left as the latest status after a stale-skill attempt.
 - Normal operation emits no chat message, warning, terminal window or error text.
   A selected skill is passed as a compact developer-context advisory containing
   only its opaque ID and the local config pointer. Codex may still display native
@@ -72,15 +82,19 @@ running Desktop task loaded the hook. Check an actual next-task hook receipt.
 
 `node bin/jev-kit.mjs auto status` reads the latest private status without a model
 call. `NO_OBSERVED_RUN` means no eligible invocation was observed, not success.
+Use `auto status --session ID` for one task; the default is latest across tasks.
 Local `auto/receipts` stores the eligible prompt, candidate metadata and raw model
 result for audit. Keep it private; do not commit it. `last-run.json` stores only
 hashed prompt/session identifiers, status, timing and usage.
 
-Disable this specific hook in Codex's hooks UI. To uninstall, remove only the
-`UserPromptSubmit` group labeled `jev-kit-auto-skills-v1` from `hooks.json`;
-preserve all other groups and credentials. A forced process termination can leave
-`auto/running.lock`; if it persists, confirm no handler is running before removing
-that exact empty lock directory. Normal exits clean it up.
+`auto disable` pauses this router locally; `auto enable` enables it without
+changing pinned skill hashes. After reviewing an updated skill, run `auto refresh`
+to back up the config and accept its new bytes. Neither operation grants native
+hook trust or clears decision history. `auto uninstall` backs up hooks.json and
+removes only the exact owned group, refusing a modified command. Other hooks,
+credentials and receipts stay intact. Full removal: [clients.md](clients.md).
+A forced termination can leave `auto/sessions/<session-hash>.lock`; confirm no
+handler for that task is running before removing that exact empty directory.
 
 This automatic hook is Codex-specific. Other clients retain their documented MCP
 or Pi integration; this release does not claim equivalent automatic interception

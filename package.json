@@ -1,6 +1,6 @@
 {
   "name": "jev-codex-kit",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Jev tools for Codex, Claude Code, Cursor, OpenCode, Pi and other coding clients",
   "type": "module",
   "license": "MIT",

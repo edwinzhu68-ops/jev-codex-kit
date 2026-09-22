@@ -1,6 +1,16 @@
 # Validation record
 
-Release candidate 0.4.0. No blanket claims about speed, savings or semantic accuracy.
+Release candidate 0.4.1. No blanket claims about speed, savings or semantic accuracy.
+
+- Final Windows full suite: **77/77 PASS**. A concurrent status-write test exposed Windows rename contention; task receipts now remain authoritative and the status command selects complete per-task records. The affected suites passed **23/23**, then the full suite passed. See release-commit CI for other platforms.
+- Regression coverage includes 42 distinct prompts despite old 6/30 counters; 40 real HTTP loopback actions across five chunks; two simultaneous tasks; Chinese payloads above 24 KB but within the character contract; stale-skill refresh; preserved legacy dedup; BOM source discovery; Lua/Luau ranges; backed-up skill upgrade/removal; idle shutdown and simultaneous broker launches.
+- Actual in-app browser + real Jev on the final reused parser/candidate code: **PASS**, two clicks / three decisions, **1,602 ms** loop, **1,070 ms** API total, 2,077 input / 141 output tokens. Independent final readback showed Report details open and Revenue 42; status ready. Disposable local fixture only.
+- Real Codex submit hook ran with an unchanged trusted command: Jev selected UI with probability 1 but applicability .86 below the .9 threshold, so the probe returned REVIEW_REQUIRED. This is not an accepted recommendation. The final fix explicitly relays such a selected candidate as review evidence; offline tests verify that contract without lowering thresholds or rerolling the failed decision. The receiving model endpoint was a local fixture, not a real generative Codex task.
+- Windows Computer Use adapter is implemented and contract-tested. The installed official sky plugin returned Calculator's window but no accessibility tree; Notepad had no targetable window. **A real Jev-selected Windows click is NOT VERIFIED.** macOS native execution and general coding speed/usage improvements are also unverified.
+- Source reuse: unchanged jev-browser-use bridge supplies browser candidates; Jev-cu supplies unchanged parseAX/role definitions. Licenses and pinned revisions are retained. Their broad execution entry points and benchmark results are not claimed as this kit's behavior.
+- One bounded Jev gate on the earlier hook/broker patch verified three scoped claims but returned overall `escalate` (`review_escalated`). It is not recorded as an automatic review pass. Host inspection and additional concurrency/lifecycle regressions followed, including the Windows status-write repair above; no threshold was relaxed and the same gate was not rerolled.
+
+Historical v0.4.0 evidence (the native-API claim below was corrected by the audit above):
 
 - Local Windows: **62/62 PASS**. Adds hook installation/preservation, Windows PowerShell launch regression, canonical project paths and junction-escape checks, routing budgets, quiet error paths, real loopback broker authorization checks, stale UI decisions, bounded browser scrolling and native adapter contract tests.
 - Actual Codex 0.153.4 hook -> real Jev -> next model input: PASS, including selection of the installed `jev-ui` skill (605 ms model route, 2,952 ms hook). Generative endpoint was a local fixture. Existing Desktop task refresh was NOT VERIFIED.

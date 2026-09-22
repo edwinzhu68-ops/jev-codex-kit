@@ -30,7 +30,7 @@ export function commandQuote(value, platform = process.platform) {
 }
 
 // Intentional one-time setup. It never writes hooks.state or bypasses native trust.
-export async function installAuto(spec, { home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
+export async function prepareAuto(spec) {
   if (!Array.isArray(spec.roots) || !spec.roots.length || !Array.isArray(spec.skill_files) || !spec.skill_files.length || spec.skill_files.length > 19) throw Error('Provide roots and 1-19 explicit skill_files.');
   const roots = [];
   for (const root of spec.roots) {
@@ -53,6 +53,11 @@ export async function installAuto(spec, { home = kitHome(), codexHome = process.
     skills.push({ file: resolved, sha256: hashText(bytes), candidate });
   }
   if (new Set(skills.map(s => s.file)).size !== skills.length) throw Error('DUPLICATE_SKILL');
+  return { version: 1, enabled: true, roots, skills };
+}
+
+export async function installAuto(spec, { home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
+  const config = await prepareAuto(spec), { roots, skills } = config;
   const directory = path.join(path.resolve(home), 'auto');
   const configFile = path.join(directory, 'config.json');
   const hookFile = path.join(codexHome, 'hooks.json');
@@ -72,10 +77,54 @@ export async function installAuto(spec, { home = kitHome(), codexHome = process.
   await mkdir(codexHome, { recursive: true });
   // Existing unrelated config is never overwritten. A matching second install
   // is deliberately explicit rather than silently changing a trusted command.
-  await writeFile(configFile, JSON.stringify({ version: 1, roots, skills }, null, 2), { flag: 'wx', mode: 0o600 });
+  await writeFile(configFile, JSON.stringify(config, null, 2), { flag: 'wx', mode: 0o600 });
   let backup = null;
   try { backup = hookFile + '.backup-' + randomUUID(); await copyFile(hookFile, backup, constants.COPYFILE_EXCL); }
   catch (e) { if (e.code !== 'ENOENT') throw e; backup = null; }
   await writeFile(hookFile, JSON.stringify(hooks, null, 2) + '\n', { mode: 0o600 });
   return { status: 'INSTALLED_AWAITING_NATIVE_TRUST', hook_file: hookFile, config_file: configFile, backup, skills: skills.length, roots: roots.length };
+}
+
+export async function refreshAuto({ home = kitHome() } = {}) {
+  const file = path.join(home, 'auto', 'config.json');
+  const before = await readFile(file, 'utf8'), old = JSON.parse(before);
+  const config = await prepareAuto({ roots: old.roots, skill_files: old.skills.map(s => s.file) });
+  config.enabled = old.enabled !== false;
+  const after = JSON.stringify(config, null, 2);
+  if (after === before) return { status: 'UNCHANGED', config_file: file };
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('CONFIG_CHANGED_DURING_REFRESH');
+  await writeFile(file, after, { mode: 0o600 });
+  return { status: 'REFRESHED', config_file: file, backup, note: 'Explicitly accepted current selected skill bytes. Hook trust and decision history unchanged.' };
+}
+
+export async function setAutoEnabled(enabled, { home = kitHome() } = {}) {
+  const file = path.join(home, 'auto', 'config.json'), before = await readFile(file, 'utf8');
+  const config = JSON.parse(before);
+  if (enabled) await prepareAuto({ roots: config.roots, skill_files: config.skills.map(s => s.file) });
+  config.enabled = enabled;
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('CONFIG_CHANGED');
+  await writeFile(file, JSON.stringify(config, null, 2), { mode: 0o600 });
+  return { status: enabled ? 'ENABLED' : 'DISABLED', backup };
+}
+
+export async function uninstallAuto({ home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
+  const file = path.join(codexHome, 'hooks.json');
+  let before;
+  try { before = await readFile(file, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return {status:'NOT_INSTALLED'}; throw e; }
+  const hooks = JSON.parse(before), groups = hooks.hooks?.UserPromptSubmit;
+  if (!Array.isArray(groups)) return {status:'NOT_INSTALLED'};
+  const command = hookCommand(fileURLToPath(new URL('../bin/jev-auto-hook.mjs', import.meta.url)), path.join(path.resolve(home),'auto','config.json'));
+  const owned = groups.filter(g => g.description === marker);
+  if (!owned.length) return {status:'NOT_INSTALLED'};
+  if (owned.length !== 1 || owned[0].hooks?.length !== 1 || owned[0].hooks[0].command !== command) throw Error('OWNED_HOOK_CHANGED_REVIEW_REQUIRED');
+  hooks.hooks.UserPromptSubmit = groups.filter(g => g !== owned[0]);
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('HOOKS_CHANGED');
+  await writeFile(file, JSON.stringify(hooks,null,2)+'\n', {mode:0o600});
+  return {status:'REMOVED',backup,note:'Only the owned hook was removed. Credentials, receipts, MCP servers and other hooks are preserved.'};
 }

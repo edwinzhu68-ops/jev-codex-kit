@@ -21,3 +21,12 @@ test('source credential and aborted call make no inference',async t=>{const f=aw
 test('complete method extraction and oversized unit refusal',()=>{const text='// filler\n'.repeat(300)+'class Controller {\n handle() { return true; }\n}\n';const unit=excerpt('a.ts',text,302);assert.equal(unit.kind,'complete_syntax_unit');assert.equal(unit.text,'handle() { return true; }');assert.throws(()=>excerpt('a.py','x'.repeat(6000),1),/SOURCE_NEEDS_NARROWER_SCOPE/);});
 test('environment variable names are not mistaken for credential values',async t=>{const f=await setup(t);await writeFile(path.join(f.root,'src','paint.ts'),'export const variable = true ? "AI_GATEWAY_API_KEY" : "TYPESAFE_API_KEY";\n');const r=await prepareBrief(f.input,{...f.options,evaluate});assert.equal(r.metrics.calls,1);await writeFile(path.join(f.root,'src','paint.ts'),'const password = "this-is-a-test-secret";\n');await assert.rejects(()=>prepareBrief(f.input,{...f.options,evaluate:()=>assert.fail('No inference')}),/SENSITIVE_SOURCE/);});
 test('local variable anchor retains the entire enclosing method',()=>{const text='// filler\n'.repeat(300)+'class Controller {\n handle() {\n const result = 1;\n return result;\n }\n}\n';const unit=excerpt('a.ts',text,303);assert.ok(unit.text.startsWith('handle()'));assert.ok(unit.text.includes('return result;'));});
+
+test('BOM and ordinary UTF-8 source discovery retain exact bytes and evidence',async t=>{
+ const f=await setup(t),file=path.join(f.root,'src','ttl.ts'),original=await readFile(file);
+ await writeFile(file,Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),original]));
+ const withBom=await prepareBrief(f.input,{...f.options,evaluate});
+ assert.ok(withBom.evidence.find(e=>e.path==='ttl.ts').text.startsWith('\uFEFF'));
+ await writeFile(file,original);const plain=await prepareBrief(f.input,{...f.options,evaluate});
+ assert.notEqual(withBom.evidence.find(e=>e.path==='ttl.ts').sha256,plain.evidence.find(e=>e.path==='ttl.ts').sha256);
+});

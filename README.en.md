@@ -23,7 +23,7 @@ npm run doctor
 
 The setup prompt hides your key. Windows uses current-user DPAPI; macOS/Linux use an unencrypted mode-0600 file in `~/.jev-codex-kit`. Alternatively set `TYPESAFE_API_KEY` in the environment inherited by your MCP host. API usage can cost money; no shared credentials are included. Keep the installation folder after registration.
 
-Setup adds only the `jev-kit` MCP entry and dedicated skill. It preserves other entries and refuses conflicting same-name configuration. Config and source-bearing receipts stay outside the repository. Use `JEV_KIT_HOME` consistently in both setup and the MCP host if overriding the storage directory. Doctor is offline; READY is not a live API or semantic quality result.
+Codex setup adds the `jev-kit` MCP entry, coding/UI skills and a submit hook (native hook trust still required). Existing custom catalogs are preserved. Other clients retain their MCP/Pi setup. Update in place, build, then use `setup --root PATH --client codex --upgrade --no-key-prompt` for backed-up skill replacement and explicit pin refresh. Config and source-bearing receipts stay outside the repository. Use `JEV_KIT_HOME` consistently. Doctor is offline; READY is not a live API or semantic quality result.
 
 ## Use
 
@@ -45,4 +45,6 @@ Source brief: explicit authorized subdirectory, at most 256 files/2 MiB scanned,
 
 `auto`, `BRIEF_READY` and `EVIDENCE_READY` are advisory, not permission or runtime acceptance. Secret checks are best effort; source hashes are point-in-time checks, not locks. Do not send secrets, personal data, real saves or entire repositories. See [SECURITY.md](SECURITY.md).
 
-`npm test` uses local files, actual stdio/CLI and stubbed judgments without paid API requests. See [VALIDATION.md](VALIDATION.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No autonomous executor or Foreman/JevLoop integration. Remove with `codex mcp remove jev-kit` and delete only the dedicated skill folder; preserve local receipts as needed.
+There is no daily/session judgment quota. Input bounds, per-call deadlines and short execution chunks are software limits, not provider quotas. `auto disable` pauses recommendations; see [complete removal](docs/clients.md) for the hook, both skills and MCP entry. Credentials/receipts are preserved.
+
+`npm test` uses local files, actual stdio/CLI and stubbed judgments without paid API requests. See [VALIDATION.md](VALIDATION.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No autonomous executor or Foreman/JevLoop integration.

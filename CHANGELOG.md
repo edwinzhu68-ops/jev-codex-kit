@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1
+
+- Remove arbitrary 6/30 routing and 30 broker-call counters; uncertainty blocks only unchanged decisions, with legacy receipt/dedup migration.
+- Record stale skills accurately; add explicit catalog refresh, task-specific status, disable/enable and owned-hook removal. Codex setup includes the automatic hook; upgrades back up skills.
+- Resume long UI trajectories with bounded recent context; accept Chinese payloads under consistent character/UTF-8 envelopes; isolate simultaneous broker requests and startup ownership.
+- Add the official Windows sky adapter with mandatory observe/inspect/action boundaries. Live native clicks remain unverified when accessibility is absent.
+- Align BOM decoding in source briefs, allow explicit Lua/Luau evidence ranges, and document complete removal and current validation limits.
+
 ## 0.4.0
 
 - Optional native Codex UserPromptSubmit hook, bounded routing, private receipts and quiet fail-open behavior; Windows shell-compatible launcher.

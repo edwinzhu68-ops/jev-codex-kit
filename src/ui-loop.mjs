@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto';
 import { configureRuntime, loadKey, MODEL } from './settings.mjs';
-const hashText = text => createHash('sha256').update(text).digest('hex');
-function assertNoSecret(text) {
+import { availableActions } from '../vendor/jev-browser-use/bridge.mjs';
+import { parseAX } from '../vendor/jev-cu/parse-ax.mjs';
+export const hashText = text => createHash('sha256').update(text).digest('hex');
+export function assertNoSecret(text) {
   if (/-----BEGIN .*PRIVATE KEY-----|\bapikey_[A-Za-z0-9_-]{20,}|\b(?:sk|ghp|github_pat)[-_][A-Za-z0-9_-]{20,}|\bBearer\s+[A-Za-z0-9._-]{15,}|["']?(?:api_key|apiKey|password|access_token)["']?\s*[:=]\s*["'][^"'\r\n]{8,}["']/i.test(text)) throw Error('SENSITIVE_INPUT');
 }
 
@@ -22,10 +24,7 @@ async function evaluateUI(request, { signal }) {
 // Independent implementation informed by Jev-cu and jev-browser-use. No DOM
 // injection, generated selectors, coordinate synthesis, or alternate driver.
 export function parseControls(state) {
-  return String(state).split(/\r?\n/).flatMap(line => {
-    const m = line.trim().match(/^(\d+) (radio button|menu item|text field|text area|combo box|pop up button|[\w]+)(?: \([^)]*\))?\s*(?:Description: )?(.*)$/);
-    return m ? [{ index: Number(m[1]), role: m[2], name: m[3].replace(/, (?:Value|URL):.*$/, '').trim() }] : [];
-  });
+  return parseAX(state).map(e=>({index:e.index,role:e.role,name:e.label.replace(/^\([^)]*\)\s*/, '').replace(/^Description: /,'').replace(/, (?:Value|URL):.*$/, '').trim()}));
 }
 const clickRoles = new Set(['button','link','checkbox','checkBox','radio button','radioButton','menu item','menuItem','tab','toggle button','按钮']);
 
@@ -40,13 +39,15 @@ export function observedActions(state, controls) {
       continue;
     }
     if (control.op !== 'click' || typeof control.name !== 'string' || !control.name || control.name.length > 160) throw Error('Unsupported control; host handles typing and other actions');
-    const matches = elements.filter(e => clickRoles.has(e.role) && e.name === control.name);
+    const matches = /^Browser tab:/m.test(state)
+      ? availableActions(state,[control])
+      : elements.filter(e => clickRoles.has(e.role) && e.name === control.name);
     if (matches.length === 1) actions.push({ id: 'a' + actions.length, op: 'click', index: matches[0].index, name: control.name });
   }
   return actions;
 }
 
-function validateState(state, scope) {
+export function validateState(state, scope) {
   if (typeof state !== 'string' || state.length > 16000) throw Error('UI_STATE_LIMIT');
   assertNoSecret(state);
   if (scope.kind === 'browser') {
@@ -119,7 +120,10 @@ export function createUISession(target, { scope, maxSteps = 8, maxMs = 25000, mi
           state = next;
         }
         return finish('STEP_LIMIT', state);
-      } catch { terminal = true; return finish('ERROR_HANDOFF'); }
+      } catch (e) {
+        if (e.beforeInference === true) return finish(e.code);
+        terminal = true; return finish('ERROR_HANDOFF');
+      }
       finally { busy = false; }
     }
   };

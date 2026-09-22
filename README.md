@@ -35,7 +35,9 @@
 
 安装向导在需要时隐藏输入 API Key。Windows 使用当前用户 DPAPI 加密保存；macOS/Linux 使用用户目录中的权限 0600 文件（不加密）。也可自行设置 `TYPESAFE_API_KEY` 环境变量，不保存密钥。设置了环境变量时，启动 Codex 的进程也必须继承它。配置和回执保存在 `~/.jev-codex-kit`，不在源码仓库。
 
-`--codex` 只添加名为 `jev-kit` 的 MCP 注册和独立 `jev-codex-kit` 技能，不改其他服务或全局 AGENTS.md。同名不同配置会拒绝覆盖。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
+Codex 安装会添加名为 `jev-kit` 的 MCP、`jev-codex-kit` / `jev-ui` 两个技能和自动推荐 hook；首次仍需 Codex 原生信任该 hook。其他服务和全局 AGENTS.md 保留。已有自定义自动目录不会被默认替换。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
+
+升级时在原安装目录更新代码、安装依赖并构建，然后运行 `node bin/jev-kit.mjs setup --root "项目路径" --client codex --upgrade --no-key-prompt`。会备份更新技能、刷新已选技能的哈希，保留凭据、历史判断和其他 hook。只升级 UI 技能可运行 `ui install --upgrade`，之后 `auto refresh`。
 
 `doctor` 只做本地检查，不调用付费 API；READY 不代表模型服务或判断质量已验证。旧任务看不到工具时，可新建任务，或者使用下面的 CLI，不必打断其他正在运行的任务。
 
@@ -95,4 +97,4 @@ npm test
 
 发布验证与当前限制见 [VALIDATION.md](VALIDATION.md)。本项目为社区整合，不是 TypeSafe 或 OpenAI 官方产品。
 
-卸载：`codex mcp remove jev-kit`，再删除单独的 `~/.agents/skills/jev-codex-kit`；需要保留证据时不要删除 `~/.jev-codex-kit`。这些命令不操作其他 Jev 安装。
+暂停自动推荐：`node bin/jev-kit.mjs auto disable`。完整卸载按[客户端说明](docs/clients.md#troubleshooting-and-removal--排错与卸载)依次移除 owned hook、UI 技能、MCP 与编码技能，保留凭据和证据。没有“每天 30 次”或“一个任务 6 次”限制；单次请求大小、执行分段和超时是程序边界，并非账号额度。

@@ -7,12 +7,13 @@ import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { addRoot, readSettings, loadKey, saveKey, configureRuntime, kitHome } from '../src/settings.mjs';
 import { clientConfig, installClient, skillContent, serverSpec } from '../src/clients.mjs';
+import { installCodexSkill, removeCodexSkill } from '../src/codex-skills.mjs';
 
 const entry = fileURLToPath(import.meta.url);
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const argv = process.argv.slice(2);
 const command = argv.shift() || 'help';
-const help = `Jev Coding Kit 0.4.0 (repository/package: jev-codex-kit)
+const help = `Jev Coding Kit 0.4.1 (repository/package: jev-codex-kit)
   setup --root PATH [--client CLIENT,...] [--no-key-prompt]
                                              Authorize project and install selected clients
   Clients: codex, claude, cursor, opencode, pi, vscode, none
@@ -26,8 +27,12 @@ const help = `Jev Coding Kit 0.4.0 (repository/package: jev-codex-kit)
                                              Route a bounded, fresh skill catalog
   auto install SPEC.json                     Install silent Codex submit hook (native trust required)
   auto status                                Read last private automatic routing status
-  ui start                                   Start bounded local API broker silently
-  ui install                                 Install the Codex UI loop skill
+  auto refresh                               Explicitly repin selected skill files; preserve history
+  auto enable|disable|uninstall               Manage only the owned hook
+  ui start                                   Start/reuse local API broker silently (no call quota)
+  ui install [--upgrade]                      Install/update the Codex UI skill with backup
+  ui uninstall                               Remove only the unmodified owned UI skill
+  setup --upgrade                            Allow backed-up Codex skill upgrades
   help
 Use your own TypeSafe API key. Keep this installation folder after registering.
 `;
@@ -77,22 +82,21 @@ async function registerCodex() {
     const added = runCodex(['mcp', 'add', 'jev-kit', ...(spec.env ? ['--env', 'JEV_KIT_HOME=' + spec.env.JEV_KIT_HOME] : []), '--', process.execPath, entry, 'serve']);
     if (added.status !== 0) throw Error('Codex registration failed. Run config for a manual MCP entry.');
   }
-  const target = path.join(homedir(), '.agents', 'skills', 'jev-codex-kit');
-  await mkdir(target, { recursive: true });
-  const content = await skillContent();
-  const skill = path.join(target, 'SKILL.md');
-  try { await writeFile(skill, content, { flag: 'wx' }); }
-  catch (e) { if (e.code !== 'EEXIST' || await readFile(skill, 'utf8') !== content) throw Error('Existing skill was preserved; install the bundled skill manually if needed.'); }
+  await installCodexSkill('jev-codex-kit',{upgrade:argv.includes('--upgrade')});
   await installUISkill();
+  const { installAuto, refreshAuto } = await import('../src/auto-install.mjs');
+  const configFile=path.join(kitHome(),'auto','config.json');
+  if(await access(configFile).then(()=>true,()=>false)) {
+    if(argv.includes('--upgrade'))console.log(JSON.stringify(await refreshAuto()));
+  } else {
+    const roots=(await readSettings()).roots;
+    const skill_files=['jev-codex-kit','jev-ui'].map(n=>path.join(homedir(),'.agents','skills',n,'SKILL.md'));
+    console.log(JSON.stringify(await installAuto({roots,skill_files})));
+  }
   console.log('Codex MCP registered as jev-kit; dedicated skills installed. Open a new task if current tools are stale.');
 }
 async function installUISkill() {
-  const directory=path.join(homedir(),'.agents','skills','jev-ui');
-  const text=(await readFile(path.join(packageRoot,'skills','jev-ui','SKILL.md'),'utf8')).replaceAll('{{KIT_ROOT}}',packageRoot.replaceAll('\\','/')).replaceAll('file:///ABSOLUTE/KIT',pathToFileURL(packageRoot.replace(/[\\/]$/,'')).href);
-  await mkdir(directory,{recursive:true});
-  const target=path.join(directory,'SKILL.md');
-  try{await writeFile(target,text,{flag:'wx'});}catch(e){if(e.code!=='EEXIST'||await readFile(target,'utf8')!==text)throw Error('Existing jev-ui skill preserved; review an explicit upgrade.');}
-  return {skill:target};
+  return installCodexSkill('jev-ui',{upgrade:argv.includes('--upgrade')});
 }
 async function main() {
   if (['help','--help','-h'].includes(command)) { console.log(help); return; }
@@ -100,15 +104,20 @@ async function main() {
     const {startUIBroker}=await import('../src/ui-broker-start.mjs');
     console.log(JSON.stringify(await startUIBroker())); return;
   }
-  if (command === 'ui' && argv.length === 1 && argv[0] === 'install') {console.log(JSON.stringify(await installUISkill()));return;}
+  if (command === 'ui' && (argv.length === 1 || (argv.length===2&&argv[1]==='--upgrade')) && argv[0] === 'install') {console.log(JSON.stringify(await installUISkill()));return;}
+  if (command === 'ui' && argv.length === 1 && argv[0] === 'uninstall') {console.log(JSON.stringify(await removeCodexSkill('jev-ui')));return;}
   if (command === 'auto') {
     if (argv[0] === 'install' && argv.length === 2) {
       const { installAuto } = await import('../src/auto-install.mjs');
       console.log(JSON.stringify(await installAuto(JSON.parse(await readFile(argv[1], 'utf8'))), null, 2));
-    } else if (argv[0] === 'status' && argv.length === 1) {
-      try { console.log(await readFile(path.join(kitHome(), 'auto', 'last-run.json'), 'utf8')); }
+    } else if (['refresh','enable','disable','uninstall'].includes(argv[0]) && argv.length === 1) {
+      const {refreshAuto,setAutoEnabled,uninstallAuto}=await import('../src/auto-install.mjs');
+      console.log(JSON.stringify(await (argv[0]==='refresh'?refreshAuto():argv[0]==='uninstall'?uninstallAuto():setAutoEnabled(argv[0]==='enable'))));
+    } else if (argv[0] === 'status' && (argv.length === 1 || (argv.length===3&&argv[1]==='--session'))) {
+      const {autoStatus}=await import('../src/auto-status.mjs');
+      try { console.log(JSON.stringify(await autoStatus(kitHome(),argv[2]))); }
       catch (e) { if (e.code !== 'ENOENT') throw e; console.log(JSON.stringify({ status: 'NO_OBSERVED_RUN', hint: 'Installation does not prove native trust or current client support.' })); }
-    } else throw Error('Use auto install SPEC.json or auto status');
+    } else throw Error('Use auto install SPEC.json, refresh, enable, disable, uninstall or status [--session ID]');
     return;
   }
   if (command === 'skills') {
@@ -154,7 +163,7 @@ async function main() {
     return;
   }
   if (command === 'setup') {
-    const known = new Set(['--root','--client','--codex','--no-key-prompt']);
+    const known = new Set(['--root','--client','--codex','--no-key-prompt','--upgrade']);
     for (let i = 0; i < argv.length; i++) { if (!known.has(argv[i])) throw Error('Unknown setup option'); if (['--root','--client'].includes(argv[i])) {if(!argv[i+1]||argv[i+1].startsWith('--'))throw Error('Missing option value');i++;} }
     if(argv.includes('--codex')&&argv.includes('--client'))throw Error('Use --client or --codex, not both.');
     let selected=argv.includes('--codex')?'codex':option('--client');

@@ -8,8 +8,8 @@ speedup. This table distinguishes shipped behavior from research and limitations
 | [burnigtm/jev-mcp](https://github.com/burnigtm/jev-mcp) | Typed route/review/verify/gate judgments | Nine existing tools; host retains execution and acceptance |
 | [tonyzdev/pijev](https://github.com/tonyzdev/pijev) | Scope source discovery and semantic ranking | Existing `jev_code_brief`, hashes and full selected source units |
 | [lomeshdutta/skill-router](https://github.com/lomeshdutta/skill-router) | Match goals to installed skills, allow no match | Existing bounded router plus optional native Codex submit hook |
-| [Sac-Y/Jev-cu](https://github.com/Sac-Y/Jev-cu/tree/52d32ac24e2cea29c63d9d7c4bd6d4c401111f56) | Codex binds/reads/acts; Jev selects from AX controls inside a loop | New bound-target UI loop; desktop adapter contract tested, real native execution BLOCKED in this session |
-| [wy-coliney/jev-browser-use](https://github.com/wy-coliney/jev-browser-use/tree/f14b60e0ae1ee90cd73eb6650e30a666a84c021a) | Keep loop inside existing CUA connection; preserve history and return to host | New `createBrokerSession`, unique observed controls, stale-state checks, host typing/verification |
+| [Sac-Y/Jev-cu](https://github.com/Sac-Y/Jev-cu/tree/52d32ac24e2cea29c63d9d7c4bd6d4c401111f56) | Codex binds/reads/acts; Jev selects from AX controls | Directly reused parseAX and role definitions; separate Windows sky adapter observes between native actions; live accessibility remains a prerequisite |
+| [wy-coliney/jev-browser-use](https://github.com/wy-coliney/jev-browser-use/tree/f14b60e0ae1ee90cd73eb6650e30a666a84c021a) | Existing CUA connection and fresh named controls | Unchanged vendored bridge supplies availableActions; kit retains bounded broker, stale-state checks and host acceptance |
 | [browser-use/jev-ultrafast](https://github.com/browser-use/jev-ultrafast/tree/1231850a0bf1a0c0341fe408ef1668dbbfdfac46) | Indexed action space, one decision request per cycle, separate writing and execution | One Choice over already authorized action/target pairs; no extra Chrome/CDP profile or text-model account installed |
 | [NiazMorshed2007/jev-review](https://github.com/NiazMorshed2007/jev-review) | Evidence-based code feedback | Existing review/gate retained; no duplicate mandatory second reviewer installed |
 | [tamaratran/fast-jev-compaction](https://github.com/tamaratran/fast-jev-compaction) | Preserve important original material | Existing pinned evidence and counterevidence retained; native conversation compaction is NOT replaced |
@@ -43,8 +43,10 @@ There is no claim that every browser action or every client is implemented.
 The loopback broker exists because the CUA import runtime rejected npm package
 resolution and process access in the current app. It only handles typed API
 judgments; all UI operations stay in CUA. It uses the existing encrypted Windows
-credential, a random local access token, a ten-minute lifetime and thirty-request
-cap. No key is returned to the browser or stored in the repository.
+credential and a random local access token. In v0.4.1 it exits after ten idle
+minutes; there is no thirty-request cap. Concurrent tasks have independent
+requests. Full history stays in the client; four recent actions go over the wire.
+No key is returned to the browser or stored in the repository.
 
 ## Actual checks on 2026-09-22
 
@@ -60,9 +62,12 @@ cap. No key is returned to the browser or stored in the repository.
 - UI test was a disposable local page, no account or production side effect.
   It is not a benchmark against Codex, a general website reliability result,
   a desktop Calendar test, or proof of a 5-10x improvement.
-- Native desktop: simulated adapter tests only. The current tool declaration
-  disables native computer APIs, so real Windows/macOS application execution is
-  BLOCKED. No alternate native driver was installed to bypass that constraint.
+- Correction after audit: the browser CUA surface disables native APIs, but the
+  separate official Windows Computer Use plugin is available. v0.4.1 adds its
+  actual sky contract and observes between actions. In the attempted live check,
+  Calculator was returned but accessibility was null; Notepad launch returned
+  no targetable window. A real Jev-selected Windows click is NOT VERIFIED.
+  Missing accessibility hands back to the host, never invents a control index.
 - Quiet means no added console window/chat announcement. Codex can still display
   hook/tool activity. Windows native UI, where available, may activate windows;
   do not promise invisible desktop interaction.

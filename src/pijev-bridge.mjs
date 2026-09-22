@@ -42,7 +42,8 @@ async function secureRead(root,relative){
  const canonical=await realpath(current);if(!inside(root,canonical))fail('PATH_ESCAPE');
  const info=await lstat(canonical);if(!info.isFile()||info.size>256*1024)fail('SOURCE_SIZE');
  const b=await readFile(canonical);if(b.length>256*1024)fail('SOURCE_SIZE');
- const text=new TextDecoder('utf8',{fatal:true}).decode(b);if(text.includes('\0'))fail('BINARY_SOURCE');
+ // Match discovery's BOM-preserving decoder; hashes still cover original bytes.
+ const text=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(b);if(text.includes('\0'))fail('BINARY_SOURCE');
  return {text,hash:sha(b),canonical};
 }
 export async function prepareBrief(raw,{evaluate=runEvaluate,roots=ROOTS,runs=RUNS,signal}={}){

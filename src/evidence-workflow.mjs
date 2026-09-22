@@ -34,10 +34,10 @@ async function collect(input,roots){
  const collected=[];
  for(const s of input.sources){
   if(path.isAbsolute(s.path)||/[:\\]/.test(s.path)||s.path.split('/').some(p=>p==='..'||p===''||p==='.')||/(^|\/)(?:\.git|\.codex|\.env[^/]*|credentials?|secrets?|saves?|saved_games|auth[^/]*|api[-_]key[^/]*)(\/|$)/i.test(s.path)||/\.(?:dpapi|pem|key|sqlite\d*|db)$/i.test(s.path))fail('PATH_NOT_ALLOWED');
-  if(!/\.(?:gd|js|mjs|cjs|ts|tsx|py|json|md|txt|log|csv|toml|yaml|yml)$/i.test(s.path))fail('SOURCE_TYPE_NOT_ALLOWED');
+  if(!/\.(?:gd|lua|luau|js|mjs|cjs|ts|tsx|py|json|md|txt|log|csv|toml|yaml|yml)$/i.test(s.path))fail('SOURCE_TYPE_NOT_ALLOWED');
   const resolved=await realpath(path.resolve(resolvedRoot,s.path));if(!inside(resolvedRoot,resolved))fail('PATH_ESCAPES_ROOT');
   const actualRelative=path.relative(resolvedRoot,resolved).split(path.sep).join('/');
-  if(/(^|\/)(?:\.git|\.codex|\.env[^/]*|credentials?|secrets?|saves?|saved_games|auth[^/]*|api[-_]key[^/]*)(\/|$)/i.test(actualRelative)||! /\.(?:gd|js|mjs|cjs|ts|tsx|py|json|md|txt|log|csv|toml|yaml|yml)$/i.test(actualRelative))fail('RESOLVED_PATH_NOT_ALLOWED');
+  if(/(^|\/)(?:\.git|\.codex|\.env[^/]*|credentials?|secrets?|saves?|saved_games|auth[^/]*|api[-_]key[^/]*)(\/|$)/i.test(actualRelative)||! /\.(?:gd|lua|luau|js|mjs|cjs|ts|tsx|py|json|md|txt|log|csv|toml|yaml|yml)$/i.test(actualRelative))fail('RESOLVED_PATH_NOT_ALLOWED');
   const bytes=await readBounded(resolved);let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{fail('INVALID_UTF8');}
   if(text.includes('\0'))fail('BINARY_SOURCE');const lines=text.split(/\r?\n/);let start=1,end=lines.length;
   if(s.symbol){const re=new RegExp('^(?:static )?func '+s.symbol+'\\(');const matches=lines.flatMap((l,i)=>re.test(l)?[i]:[]);if(matches.length!==1)fail('SYMBOL_NOT_UNIQUE_OR_MISSING');start=matches[0]+1;end=start;while(end<lines.length&&!/^(?:static )?func /.test(lines[end]))end++;}
