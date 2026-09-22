@@ -1,5 +1,12 @@
 # Validation record
 
+## Unreleased source update: pre-work reminder — 2026-09-22
+
+- The global Codex rule now requires a zero-model, purpose-based Jev preflight before each new substantive task or independent work package. It preserves on-demand calls and excludes deterministic work and repeat judgments.
+- The existing trusted `UserPromptSubmit` hook command and installed `workflow` mode were retained. Its handler now returns the local pre-work reminder on each eligible substantive prompt in the same task: first `WORKFLOW_HINT`, then `WORKFLOW_REMINDER`. Short continuations and excluded/sensitive prompts still skip locally; global instructions carry the work-package rule.
+- A direct invocation of the current installed handler and config for one synthetic session with two distinct eligible work prompts returned `UserPromptSubmit` additional context twice. The second status was `WORKFLOW_REMINDER`, `model: null`, `workflow_inference_calls: 0`, `question_count: 0`. This verifies the handler path, not a new Desktop model turn or every already-running task's refresh.
+- Affected hook tests: 16/16 PASS. Full local kit suite after the batch: 81/81 PASS. No Jev API request, model/provider change, restart, or hook trust change was required for this validation.
+
 Release candidate 0.4.2. No blanket claims about speed, savings or semantic accuracy.
 
 - Windows suite: **81/81 PASS**; after deferring the unused provider import, the affected hook/router/entry suites passed **32/32**. The original local companion passed **20/20**. CI for the release commit determines Linux/macOS results.

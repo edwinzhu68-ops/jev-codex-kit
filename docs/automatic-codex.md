@@ -4,8 +4,9 @@ The native `UserPromptSubmit` hook starts on normal user messages. Codex setup
 installs it together with the two dedicated skills. It can be disabled. After
 one-time setup and native Codex trust, users do not name Jev, start a terminal,
 or manually run a router for each task. New installations use **workflow mode**:
-one local work-sharing hint per task/catalog, with zero model calls and no prompt
-upload. Codex can then select a scoped batch or UI workflow when useful. Codex
+a local pre-work reminder on each eligible substantive user prompt, with zero
+model calls and no prompt upload. Codex can then select a scoped judgment or UI
+workflow when useful. Codex
 still owns execution, evidence gathering and acceptance. The hint is not proof
 that Jev ran, a continuous supervisor, or a guarantee of future host behavior.
 
@@ -61,11 +62,13 @@ running Desktop task loaded the hook. Check an actual next-task hook receipt.
 ## Runtime contract
 
 - Both modes use only the configured roots and validate the selected skill hashes.
-  Workflow mode emits a fixed local hint once per task/catalog and records
-  `WORKFLOW_HINT`; later eligible prompts record `SKIPPED_WORKFLOW_HINT`.
+  Workflow mode emits a fixed local reminder on every eligible substantive prompt.
+  The first records `WORKFLOW_HINT`; later eligible prompts record `WORKFLOW_REMINDER`.
   It does not decrypt credentials, query Jev, or ask the host to look up a candidate
   ID. The native hook process still starts for submit events: zero model calls
-  does not mean zero local overhead. It does not intercept tool results or Stop.
+  does not mean zero local overhead. It does not intercept tool results, Stop,
+  or a continuation that fails the local eligibility filter. Project/global
+  instructions carry the pre-work judgment across such continuations and compaction.
 - **Skills mode only:** eligible current prompt plus full descriptions of 1-19 selected skills goes to
   TypeSafe. No transcript, skill body, repository source, or arbitrary directory
   scan is sent. This is a curated candidate scope, not the client's full registry.

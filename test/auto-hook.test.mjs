@@ -20,18 +20,21 @@ async function fixture(mode = 'skills') {
   return { root, skill, installed, config, original, event: { hook_event_name: 'UserPromptSubmit', session_id: 'session', cwd: root, prompt: 'Review these code changes for regressions' } };
 }
 
-test('workflow hint is local, once per task, and does not configure credentials or call Jev', async () => {
+test('workflow reminder is local on each eligible work prompt and never calls Jev', async () => {
   const f = await fixture('workflow');
   assert.equal((await prepareAuto({ roots: [f.root], skill_files: [f.skill] })).mode, 'workflow');
   const deps = { configure: async () => assert.fail('No credential/provider work'), route: async () => assert.fail('No model request') };
   const first = await runAutoHook(f.event, f.installed.config_file, deps);
   assert.match(first.hookSpecificOutput.additionalContext, /zero model calls/);
+  assert.match(first.hookSpecificOutput.additionalContext, /before each substantive task/);
   assert.doesNotMatch(first.hookSpecificOutput.additionalContext, /candidate ID|Inspect candidate/);
-  assert.equal(await runAutoHook({ ...f.event, prompt: 'Now examine a different set of logs' }, f.installed.config_file, deps), null);
+  const next = await runAutoHook({ ...f.event, prompt: 'Now examine a different set of logs' }, f.installed.config_file, deps);
+  assert.match(next.hookSpecificOutput.additionalContext, /before each substantive task/);
   const last = JSON.parse(await readFile(path.join(path.dirname(f.installed.config_file), 'last-run.json')));
-  assert.equal(last.status, 'SKIPPED_WORKFLOW_HINT');
+  assert.equal(last.status, 'WORKFLOW_REMINDER');
   assert.equal(last.metrics.workflow_inference_calls, 0);
   assert.equal(JSON.parse(await readFile(path.join(path.dirname(f.installed.config_file), 'sessions', last.session + '.json'))).count, 0);
+  assert.equal(await runAutoHook({ ...f.event, prompt: '继续' }, f.installed.config_file, deps), null);
   assert(await runAutoHook({ ...f.event, session_id: 'another-task' }, f.installed.config_file, deps));
 });
 

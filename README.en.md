@@ -2,7 +2,7 @@
 
 New: [quiet automatic Codex entry](docs/automatic-codex.md) and a [CUA/browser integration map](docs/integration-map.md). A real browser run completed two clicks inside one host call. Native desktop execution requires a supported runtime and remains separately unverified.
 
-0.4.2 defaults new installations to a once-per-task local workflow hint with zero model calls. Existing users can select `auto mode workflow`; paid skill routing remains optional. In the [workload diagnostic](docs/evaluations/workload-benefit-20260922.md), eight Chinese reports were classified in about 0.69 seconds with 8/8 expected labels, while source-claim verification had errors and extensive review overhead. Evidence text now removes repeated metadata without cutting retained originals. These results do not establish whole-task coding speedups.
+The current `main` branch emits a zero-Jev-call pre-work reminder for every eligible substantive prompt in `workflow` mode; short continuations still require the host's task instructions. Paid skill routing remains optional. In the 0.4.2 [workload diagnostic](docs/evaluations/workload-benefit-20260922.md), eight Chinese reports were classified in about 0.69 seconds with 8/8 expected labels, while source-claim verification had errors and extensive review overhead. Evidence text removes repeated metadata without cutting retained originals. These results do not establish whole-task coding speedups.
 
 One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery, evidence preparation and task-based skill suggestions (12 tools). Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
 

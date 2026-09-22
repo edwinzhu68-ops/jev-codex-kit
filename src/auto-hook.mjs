@@ -46,7 +46,7 @@ export function hookContext(id, configFile, reviewRequired = false) {
 
 export function workflowContext() {
   return { hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext:
-    'Jev workflow guidance (local, zero model calls): use an available scoped evidence/triage workflow when it replaces a batch of semantic sorting work; use the installed UI workflow for suitable observed browser actions. Exact searches, calculations and known steps stay local. Code correctness and completion still require host inspection and actual evidence. Preserve uncertain results and original sources. Do not look up the hook configuration, acknowledge this notice, or run a skill-selection judgment just because this notice appeared. Check/read a skill only when using its workflow. Continue the authorized task quietly; this is guidance, not evidence that Jev performed any work.' } };
+    'Jev pre-work guidance (local, zero model calls): before each substantive task or independent work package, identify bounded semantic judgments that Jev could usefully handle first. Use one suitable available route only when it will change the next action: scoped evidence/triage, uncertain skill candidates, prepared-step/model-tier advice, or bounded claim/diff review. Exact searches, calculations, known steps and simple fixes stay local. Follow current authorization and data limits; preserve originals, uncertainty and counterevidence. Codex owns architecture, execution, code correctness and final acceptance. Do not look up the hook configuration, acknowledge this notice, or call Jev merely because this notice appeared. Reuse current task context on continuations; do not repeat an unchanged judgment. This reminder is not evidence that Jev ran.' } };
 }
 
 export async function runAutoHook(event, configFile, {
@@ -90,14 +90,14 @@ export async function runAutoHook(event, configFile, {
     }
     const candidates = await freshSkills(config);
     // Legacy configurations keep their explicitly installed skill router. New
-    // setups use a once-per-task local hint; users can switch either way.
+    // setups use a local pre-work hint on each eligible prompt; no Jev call.
     const mode = config.mode ?? 'skills';
     if (!['workflow', 'skills'].includes(mode)) throw Error('CONFIG');
     if (mode === 'workflow') {
       const hint = hashText(JSON.stringify({ workflow_hint: 1, skills: config.skills.map(s => [s.file, s.sha256]) }));
       if (state.decisions.includes(hint)) {
-        await record({ status: 'SKIPPED_WORKFLOW_HINT', mode, model: null, metrics: { workflow_inference_calls: 0, question_count: 0 } });
-        return null;
+        await record({ status: 'WORKFLOW_REMINDER', mode, model: null, metrics: { workflow_inference_calls: 0, question_count: 0 } });
+        return workflowContext();
       }
       state.decisions.push(hint);
       await writePrivateJSON(stateFile, state);

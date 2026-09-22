@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Emit the zero-model `workflow` pre-work reminder for every eligible substantive prompt in a task, while short continuations and excluded prompts still skip the hook. Keep Jev judgments on demand and preserve the existing skill-routing mode.
+
 ## 0.4.2
 
 - Default new automatic installations to a once-per-task local workflow hint: no prompt upload, credential startup or paid skill classification. Preserve legacy modes and decision history; add backed-up `auto mode workflow|skills` switching.
