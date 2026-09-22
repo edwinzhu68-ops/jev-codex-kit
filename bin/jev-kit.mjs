@@ -13,7 +13,7 @@ const entry = fileURLToPath(import.meta.url);
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const argv = process.argv.slice(2);
 const command = argv.shift() || 'help';
-const help = `Jev Coding Kit 0.4.1 (repository/package: jev-codex-kit)
+const help = `Jev Coding Kit 0.4.2 (repository/package: jev-codex-kit)
   setup --root PATH [--client CLIENT,...] [--no-key-prompt]
                                              Authorize project and install selected clients
   Clients: codex, claude, cursor, opencode, pi, vscode, none
@@ -27,6 +27,7 @@ const help = `Jev Coding Kit 0.4.1 (repository/package: jev-codex-kit)
                                              Route a bounded, fresh skill catalog
   auto install SPEC.json                     Install silent Codex submit hook (native trust required)
   auto status                                Read last private automatic routing status
+  auto mode workflow|skills                  Local work-sharing hint (default) or paid skill routing
   auto refresh                               Explicitly repin selected skill files; preserve history
   auto enable|disable|uninstall               Manage only the owned hook
   ui start                                   Start/reuse local API broker silently (no call quota)
@@ -107,6 +108,11 @@ async function main() {
   if (command === 'ui' && (argv.length === 1 || (argv.length===2&&argv[1]==='--upgrade')) && argv[0] === 'install') {console.log(JSON.stringify(await installUISkill()));return;}
   if (command === 'ui' && argv.length === 1 && argv[0] === 'uninstall') {console.log(JSON.stringify(await removeCodexSkill('jev-ui')));return;}
   if (command === 'auto') {
+    if (argv[0] === 'mode') {
+      if (argv.length !== 2) throw Error('auto mode requires workflow or skills');
+      const { setAutoMode } = await import('../src/auto-install.mjs');
+      console.log(JSON.stringify(await setAutoMode(argv[1]))); return;
+    }
     if (argv[0] === 'install' && argv.length === 2) {
       const { installAuto } = await import('../src/auto-install.mjs');
       console.log(JSON.stringify(await installAuto(JSON.parse(await readFile(argv[1], 'utf8'))), null, 2));
@@ -117,7 +123,7 @@ async function main() {
       const {autoStatus}=await import('../src/auto-status.mjs');
       try { console.log(JSON.stringify(await autoStatus(kitHome(),argv[2]))); }
       catch (e) { if (e.code !== 'ENOENT') throw e; console.log(JSON.stringify({ status: 'NO_OBSERVED_RUN', hint: 'Installation does not prove native trust or current client support.' })); }
-    } else throw Error('Use auto install SPEC.json, refresh, enable, disable, uninstall or status [--session ID]');
+    } else throw Error('Use auto install SPEC.json, mode workflow|skills, refresh, enable, disable, uninstall or status [--session ID]');
     return;
   }
   if (command === 'skills') {

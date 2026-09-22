@@ -2,6 +2,8 @@
 
 新增：[自动静默入口](docs/automatic-codex.md)和[Computer Use / 浏览器整合说明](docs/integration-map.md)。浏览器已实测一次调用连续完成两次点击；桌面原生操作仍需兼容运行环境，不能用浏览器结果代替验收。
 
+0.4.2：新安装默认每个任务一次本地分工提示，开场零模型调用；旧安装可用 `auto mode workflow` 切换。[本轮对照](docs/evaluations/workload-benefit-20260922.md)中，8 条中文问题分类约 0.69 秒、8/8 符合预设答案，但源码声明核对仍有错误和大量待复核项。证据文本去掉重复字段，保留完整原文和判断；不据此宣称整项编程任务提速。
+
 一个入口，把 **Jev 结构化判断、源码定位简报、批量证据核对**接入 Codex、Claude Code、Cursor、OpenCode、Pi 和 VS Code。仓库和技能标识保留 `jev-codex-kit`，方便现有用户升级。
 
 编码助手可以先收集限定范围内的源码和日志，按需用 Jev 筛选、核对，再拿着完整材料、源码哈希和反证继续工作。它减少重复整理材料的机会；实际提速仍需针对任务测量。
@@ -35,7 +37,7 @@
 
 安装向导在需要时隐藏输入 API Key。Windows 使用当前用户 DPAPI 加密保存；macOS/Linux 使用用户目录中的权限 0600 文件（不加密）。也可自行设置 `TYPESAFE_API_KEY` 环境变量，不保存密钥。设置了环境变量时，启动 Codex 的进程也必须继承它。配置和回执保存在 `~/.jev-codex-kit`，不在源码仓库。
 
-Codex 安装会添加名为 `jev-kit` 的 MCP、`jev-codex-kit` / `jev-ui` 两个技能和自动推荐 hook；首次仍需 Codex 原生信任该 hook。其他服务和全局 AGENTS.md 保留。已有自定义自动目录不会被默认替换。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
+Codex 安装会添加名为 `jev-kit` 的 MCP、`jev-codex-kit` / `jev-ui` 两个技能和自动分工提示 hook；首次仍需 Codex 原生信任该 hook。其他服务和全局 AGENTS.md 保留。已有自定义自动目录和模式不会被默认替换；付费技能推荐仍可选 `auto mode skills`。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
 
 升级时在原安装目录更新代码、安装依赖并构建，然后运行 `node bin/jev-kit.mjs setup --root "项目路径" --client codex --upgrade --no-key-prompt`。会备份更新技能、刷新已选技能的哈希，保留凭据、历史判断和其他 hook。只升级 UI 技能可运行 `ui install --upgrade`，之后 `auto refresh`。
 

@@ -1,0 +1,451 @@
+{
+  "date": "2026-09-22",
+  "scope": "Two frozen, small diagnostics; not an end-to-end coding benchmark. No tuning or rerolling.",
+  "dataset": "evals/workload-benefit.json",
+  "verification": {
+    "baseline": {
+      "model": "gpt-6-astra",
+      "effort": "max",
+      "task_ms": 17014,
+      "from_turn_context_to_complete_ms": 15321,
+      "tool_calls": 0,
+      "usage": {
+        "input_tokens": 30551,
+        "cached_input_tokens": 0,
+        "output_tokens": 314,
+        "reasoning_output_tokens": 217
+      },
+      "results": [
+        {
+          "id": "c1",
+          "verdict": "contradicted"
+        },
+        {
+          "id": "c2",
+          "verdict": "verified"
+        },
+        {
+          "id": "c3",
+          "verdict": "verified"
+        },
+        {
+          "id": "c4",
+          "verdict": "contradicted"
+        },
+        {
+          "id": "c5",
+          "verdict": "unsupported"
+        },
+        {
+          "id": "c6",
+          "verdict": "unsupported"
+        },
+        {
+          "id": "c7",
+          "verdict": "verified"
+        },
+        {
+          "id": "c8",
+          "verdict": "contradicted"
+        }
+      ]
+    },
+    "jev": {
+      "elapsed_ms": 624,
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 1935,
+        "output_tokens": 341
+      },
+      "truncated": false,
+      "coverage": {
+        "complete": true,
+        "original_chars": 3192,
+        "evaluated_chars": 3192,
+        "estimated_tokens": {
+          "state": 798,
+          "questions": 665,
+          "longest_question": 81
+        },
+        "estimator": "chars/4"
+      },
+      "action": "escalate",
+      "summary": {
+        "verified": 2,
+        "contradicted": 6,
+        "unsupported": 0,
+        "needs_review": 7
+      },
+      "results": [
+        {
+          "claim": "[c1] The installed automatic hook accepts PostToolUse events. Use only evidence c1.",
+          "verdict": "contradicted",
+          "confidence": 0.89,
+          "probabilities": {
+            "verified": 0.01,
+            "unsupported": 0.06,
+            "contradicted": 0.93
+          },
+          "action": "review"
+        },
+        {
+          "claim": "[c2] The auto hook emits an explicit host advisory for an uncertain selection naming a valid enabled candidate. Use only evidence c2.",
+          "verdict": "contradicted",
+          "confidence": 0.75,
+          "probabilities": {
+            "verified": 0.07,
+            "unsupported": 0.1,
+            "contradicted": 0.83
+          },
+          "action": "review"
+        },
+        {
+          "claim": "[c3] Source preparation never excludes an excerpt whose counterevidence probability exceeds 0.05. Use only evidence c3.",
+          "verdict": "verified",
+          "confidence": 0.77,
+          "probabilities": {
+            "verified": 0.85,
+            "unsupported": 0.06,
+            "contradicted": 0.09
+          },
+          "action": "review"
+        },
+        {
+          "claim": "[c4] Pinned evidence with no checks or labels requires a Jev inference request. Use only evidence c4.",
+          "verdict": "contradicted",
+          "confidence": 0.48,
+          "probabilities": {
+            "verified": 0.27,
+            "unsupported": 0.07,
+            "contradicted": 0.66
+          },
+          "action": "escalate"
+        },
+        {
+          "claim": "[c5] The supplied validation establishes a real Jev-selected Windows desktop click. Use only evidence c5.",
+          "verdict": "contradicted",
+          "confidence": 0.46,
+          "probabilities": {
+            "verified": 0.16,
+            "unsupported": 0.21,
+            "contradicted": 0.63
+          },
+          "action": "escalate"
+        },
+        {
+          "claim": "[c6] This fixture-only result proves the kit speeds up arbitrary coding tasks. Use only evidence c6.",
+          "verdict": "contradicted",
+          "confidence": 1,
+          "probabilities": {
+            "verified": 0,
+            "unsupported": 0,
+            "contradicted": 1
+          },
+          "action": "auto"
+        },
+        {
+          "claim": "[c7] Foreman's worker creates a Codex thread before starting its first turn. Use only evidence c7.",
+          "verdict": "contradicted",
+          "confidence": 0.86,
+          "probabilities": {
+            "verified": 0,
+            "unsupported": 0.09,
+            "contradicted": 0.91
+          },
+          "action": "review"
+        },
+        {
+          "claim": "[c8] The shown quality guard independently supplies raw test logs and a diff to its judgment model. Use only evidence c8.",
+          "verdict": "verified",
+          "confidence": 0.89,
+          "probabilities": {
+            "verified": 0.93,
+            "unsupported": 0.05,
+            "contradicted": 0.02
+          },
+          "action": "review"
+        }
+      ],
+      "thresholds": {
+        "auto_accept": 0.9
+      }
+    },
+    "strict_expected_matches": 3,
+    "total": 8,
+    "direction_errors": [
+      "c2",
+      "c7",
+      "c8"
+    ],
+    "unsupported_vs_contradicted": [
+      "c5",
+      "c6"
+    ]
+  },
+  "triage": {
+    "baseline": {
+      "model": "gpt-6-astra",
+      "effort": "max",
+      "task_ms": 49593,
+      "from_turn_context_to_complete_ms": 48765,
+      "model_turns": 2,
+      "tool_calls": 1,
+      "confound": "Inherited skill-routing advisory caused a configuration-file lookup despite the benchmark's no-tools instruction. Timing cannot be used as a clean Jev/Codex speed ratio.",
+      "usage": {
+        "input_tokens": 61923,
+        "cached_input_tokens": 53120,
+        "output_tokens": 1289,
+        "reasoning_output_tokens": 1007
+      },
+      "results": [
+        {
+          "id": "r1",
+          "label": "orchestration"
+        },
+        {
+          "id": "r2",
+          "label": "configuration"
+        },
+        {
+          "id": "r3",
+          "label": "evidence"
+        },
+        {
+          "id": "r4",
+          "label": "browser_target"
+        },
+        {
+          "id": "r5",
+          "label": "native_accessibility"
+        },
+        {
+          "id": "r6",
+          "label": "evidence"
+        },
+        {
+          "id": "r7",
+          "label": "browser_target"
+        },
+        {
+          "id": "r8",
+          "label": "orchestration"
+        }
+      ]
+    },
+    "jev": {
+      "configured_model": "jev-1.13.0",
+      "elapsed_ms": 685,
+      "status": "EVIDENCE_READY",
+      "metrics": {
+        "preparation_ms": 11.131099998950958,
+        "inference_ms": 630.1097999997437,
+        "total_ms": 647.6964999996126,
+        "input_chars": 9566,
+        "question_count": 8,
+        "workflow_inference_calls": 1,
+        "usage": {
+          "input_tokens": 4117,
+          "output_tokens": 553
+        }
+      },
+      "selections": [
+        {
+          "id": "r1",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "orchestration",
+            "raw": {
+              "type": "choice",
+              "choice": "orchestration",
+              "confidence": 1,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 0,
+                "evidence": 0,
+                "browser_target": 0,
+                "native_accessibility": 0,
+                "orchestration": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "r2",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "configuration",
+            "raw": {
+              "type": "choice",
+              "choice": "configuration",
+              "confidence": 1,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 1,
+                "evidence": 0,
+                "browser_target": 0,
+                "native_accessibility": 0,
+                "orchestration": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "r3",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "evidence",
+            "raw": {
+              "type": "choice",
+              "choice": "evidence",
+              "confidence": 1,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 0,
+                "orchestration": 0,
+                "evidence": 1,
+                "native_accessibility": 0,
+                "browser_target": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "r4",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "browser_target",
+            "raw": {
+              "type": "choice",
+              "choice": "browser_target",
+              "confidence": 1,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 0,
+                "evidence": 0,
+                "browser_target": 1,
+                "native_accessibility": 0,
+                "orchestration": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "r5",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "native_accessibility",
+            "raw": {
+              "type": "choice",
+              "choice": "native_accessibility",
+              "confidence": 1,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 0,
+                "evidence": 0,
+                "browser_target": 0,
+                "native_accessibility": 1,
+                "orchestration": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "r6",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "evidence",
+            "raw": {
+              "type": "choice",
+              "choice": "evidence",
+              "confidence": 1,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 0,
+                "evidence": 1,
+                "browser_target": 0,
+                "native_accessibility": 0,
+                "orchestration": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "r7",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "browser_target",
+            "raw": {
+              "type": "choice",
+              "choice": "browser_target",
+              "confidence": 1,
+              "probabilities": {
+                "configuration": 0,
+                "unknown": 0,
+                "browser_target": 1,
+                "orchestration": 0,
+                "native_accessibility": 0,
+                "evidence": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "r8",
+          "disposition": "retain",
+          "relevance": null,
+          "counterevidence": null,
+          "label": {
+            "value": "orchestration",
+            "raw": {
+              "type": "choice",
+              "choice": "orchestration",
+              "confidence": 0.9,
+              "probabilities": {
+                "unknown": 0,
+                "configuration": 0.08,
+                "browser_target": 0,
+                "orchestration": 0.92,
+                "native_accessibility": 0,
+                "evidence": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "expected_matches": 8,
+    "total": 8
+  },
+  "presentation": {
+    "old_text_chars": 8769,
+    "new_text_chars": 4887,
+    "old_serialized_mcp_chars": 18454,
+    "new_serialized_mcp_chars": 14254,
+    "original_text_chars": 335,
+    "all_original_text_preserved": true,
+    "all_decisions_preserved": true,
+    "full_structured_content_unchanged": true,
+    "method": "Offline rendering of the already recorded triage response; no further inference. Counts include private path lengths but no private paths are published here."
+  },
+  "limits": [
+    "Fixtures and expected answers are project-authored, not an independent benchmark.",
+    "Baseline model was gpt-6-astra with max effort; results need not transfer to other models or settings.",
+    "The triage Codex timing includes an inherited hook advisory and config lookup, so it cannot support a clean speed ratio.",
+    "Codex token totals include inherited instructions/tools and cached prefixes; they are not incremental billable workload or savings.",
+    "No real game task, live native desktop click, full-task speedup or cost reduction was established."
+  ]
+}

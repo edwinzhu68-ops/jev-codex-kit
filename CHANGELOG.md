@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+- Default new automatic installations to a once-per-task local workflow hint: no prompt upload, credential startup or paid skill classification. Preserve legacy modes and decision history; add backed-up `auto mode workflow|skills` switching.
+- Compact evidence text by merging repeated metadata without cutting retained originals, uncertainty, exclusions or checks. Keep full structured output and receipts compatible.
+- Publish a bounded workload diagnostic, including unsuccessful source verification and a confounded Codex timing. No general speed or token-savings claim.
+
 ## 0.4.1
 
 - Remove arbitrary 6/30 routing and 30 broker-call counters; uncertainty blocks only unchanged decisions, with legacy receipt/dedup migration.

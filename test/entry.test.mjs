@@ -77,6 +77,12 @@ test('actual stdio exposes 12 tools and returns deterministic evidence and requi
     assert.equal(routed.structuredContent.metrics.workflow_inference_calls,0);
     const result = await client.callTool({name:'jev_prepare_evidence',arguments:{task:'Collect proof',root:f.root,sources:[{id:'proof',path:'proof.txt',pinned:true}]}});
     assert.equal(result.structuredContent.status,'EVIDENCE_READY');
+    const view = JSON.parse(result.content[0].text);
+    assert.equal(view.format,'jev-evidence-text-v1');
+    assert.equal(view.evidence[0].text,result.structuredContent.evidence[0].text);
+    assert.equal(view.evidence[0].file_sha256,result.structuredContent.evidence[0].file_sha256);
+    assert.deepEqual(view.checks,result.structuredContent.checks);
+    assert.equal(result.structuredContent.metrics.workflow_inference_calls,0);
     const rejected = await client.callTool({name:'jev_evaluate',arguments:{model:'other-model',state:'x',questions:{a:{type:'noul',instructions:'Does x exist?'}}}});
     assert.equal(rejected.isError,true);
   } finally { await client.close(); }

@@ -25,8 +25,9 @@ automatically free of side effects.
 
 ## Quiet automatic entry
 
-Follow [automatic Codex setup](automatic-codex.md). The submit hook can recommend
-the UI skill; the host starts its API broker without another user launch. Existing
+Follow [automatic Codex setup](automatic-codex.md). New installs provide a local
+workflow hint; optional skills mode can recommend the UI skill. When using it,
+the host starts its API broker without another user launch. Existing
 ongoing tasks still require actual hook/skill refresh evidence. The host checks
 real tool availability, task permissions and data scope before UI actions.
 

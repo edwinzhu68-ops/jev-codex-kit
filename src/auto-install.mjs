@@ -31,6 +31,8 @@ export function commandQuote(value, platform = process.platform) {
 
 // Intentional one-time setup. It never writes hooks.state or bypasses native trust.
 export async function prepareAuto(spec) {
+  const mode = spec.mode ?? 'workflow';
+  if (!['workflow', 'skills'].includes(mode)) throw Error('INVALID_AUTO_MODE');
   if (!Array.isArray(spec.roots) || !spec.roots.length || !Array.isArray(spec.skill_files) || !spec.skill_files.length || spec.skill_files.length > 19) throw Error('Provide roots and 1-19 explicit skill_files.');
   const roots = [];
   for (const root of spec.roots) {
@@ -53,7 +55,7 @@ export async function prepareAuto(spec) {
     skills.push({ file: resolved, sha256: hashText(bytes), candidate });
   }
   if (new Set(skills.map(s => s.file)).size !== skills.length) throw Error('DUPLICATE_SKILL');
-  return { version: 1, enabled: true, roots, skills };
+  return { version: 1, enabled: true, mode, roots, skills };
 }
 
 export async function installAuto(spec, { home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
@@ -88,7 +90,7 @@ export async function installAuto(spec, { home = kitHome(), codexHome = process.
 export async function refreshAuto({ home = kitHome() } = {}) {
   const file = path.join(home, 'auto', 'config.json');
   const before = await readFile(file, 'utf8'), old = JSON.parse(before);
-  const config = await prepareAuto({ roots: old.roots, skill_files: old.skills.map(s => s.file) });
+  const config = await prepareAuto({ roots: old.roots, skill_files: old.skills.map(s => s.file), mode: old.mode ?? 'skills' });
   config.enabled = old.enabled !== false;
   const after = JSON.stringify(config, null, 2);
   if (after === before) return { status: 'UNCHANGED', config_file: file };
@@ -109,6 +111,19 @@ export async function setAutoEnabled(enabled, { home = kitHome() } = {}) {
   if (await readFile(file, 'utf8') !== before) throw Error('CONFIG_CHANGED');
   await writeFile(file, JSON.stringify(config, null, 2), { mode: 0o600 });
   return { status: enabled ? 'ENABLED' : 'DISABLED', backup };
+}
+
+export async function setAutoMode(mode, { home = kitHome() } = {}) {
+  if (!['workflow', 'skills'].includes(mode)) throw Error('INVALID_AUTO_MODE');
+  const file = path.join(home, 'auto', 'config.json'), before = await readFile(file, 'utf8');
+  const config = JSON.parse(before);
+  if ((config.mode ?? 'skills') === mode) return { status: 'UNCHANGED', mode };
+  config.mode = mode;
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('CONFIG_CHANGED');
+  await writeFile(file, JSON.stringify(config, null, 2), { mode: 0o600 });
+  return { status: 'MODE_CHANGED', mode, backup, note: 'Existing decision history and native hook trust were preserved.' };
 }
 
 export async function uninstallAuto({ home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {

@@ -44,6 +44,11 @@ export function hookContext(id, configFile, reviewRequired = false) {
     '. This is advisory, not authorization or task acceptance. Resolve that ID locally, confirm the skill is available and applicable under current host rules, and read its SKILL.md before use. Preserve explicit skill requirements and ongoing task context. Continue authorized work without asking the user to name Jev or launch it. Keep routine auxiliary judgments quiet; report material blockers or limitations. Do not repeat this skill-selection judgment through another route.' } };
 }
 
+export function workflowContext() {
+  return { hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext:
+    'Jev workflow guidance (local, zero model calls): use an available scoped evidence/triage workflow when it replaces a batch of semantic sorting work; use the installed UI workflow for suitable observed browser actions. Exact searches, calculations and known steps stay local. Code correctness and completion still require host inspection and actual evidence. Preserve uncertain results and original sources. Do not look up the hook configuration, acknowledge this notice, or run a skill-selection judgment just because this notice appeared. Check/read a skill only when using its workflow. Continue the authorized task quietly; this is guidance, not evidence that Jev performed any work.' } };
+}
+
 export async function runAutoHook(event, configFile, {
   route = routeSkills, configure = configureRuntime, now = () => new Date(),
 } = {}) {
@@ -84,6 +89,21 @@ export async function runAutoHook(event, configFile, {
       } catch (e) { if (e.code !== 'ENOENT') throw e; }
     }
     const candidates = await freshSkills(config);
+    // Legacy configurations keep their explicitly installed skill router. New
+    // setups use a once-per-task local hint; users can switch either way.
+    const mode = config.mode ?? 'skills';
+    if (!['workflow', 'skills'].includes(mode)) throw Error('CONFIG');
+    if (mode === 'workflow') {
+      const hint = hashText(JSON.stringify({ workflow_hint: 1, skills: config.skills.map(s => [s.file, s.sha256]) }));
+      if (state.decisions.includes(hint)) {
+        await record({ status: 'SKIPPED_WORKFLOW_HINT', mode, model: null, metrics: { workflow_inference_calls: 0, question_count: 0 } });
+        return null;
+      }
+      state.decisions.push(hint);
+      await writePrivateJSON(stateFile, state);
+      await record({ status: 'WORKFLOW_HINT', mode, model: null, metrics: { workflow_inference_calls: 0, question_count: 0 } });
+      return workflowContext();
+    }
     const decision = hashText(JSON.stringify({ goal, skills: config.skills.map(s => [s.file, s.sha256, s.candidate]) }));
     if (state.legacy_goals.includes(goal) || state.decisions.includes(decision)) { await record({ status: 'SKIPPED_REPEAT' }); return null; }
     // One attempt per unchanged input. No artificial daily/session quota.

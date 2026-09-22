@@ -4,10 +4,10 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { installAuto, commandQuote, hookCommand, refreshAuto, setAutoEnabled, uninstallAuto } from '../src/auto-install.mjs';
+import { prepareAuto, installAuto, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
 import { runAutoHook, eligiblePrompt, withinRoot } from '../src/auto-hook.mjs';
 
-async function fixture() {
+async function fixture(mode = 'skills') {
   const root = await mkdtemp(path.join(os.tmpdir(), 'jev-auto-'));
   const skill = path.join(root, 'SKILL.md');
   await writeFile(skill, '---\nname: code-review\ndescription: Review code changes for regressions.\n---\nLocal body.');
@@ -15,10 +15,41 @@ async function fixture() {
   await mkdir(codexHome);
   const original = { hooks: { Stop: [{ hooks: [{ type: 'command', command: 'echo existing' }] }] } };
   await writeFile(path.join(codexHome, 'hooks.json'), JSON.stringify(original));
-  const installed = await installAuto({ roots: [root], skill_files: [skill] }, { home: path.join(root, 'kit'), codexHome });
+  const installed = await installAuto({ roots: [root], skill_files: [skill], mode }, { home: path.join(root, 'kit'), codexHome });
   const config = JSON.parse(await readFile(installed.config_file));
   return { root, skill, installed, config, original, event: { hook_event_name: 'UserPromptSubmit', session_id: 'session', cwd: root, prompt: 'Review these code changes for regressions' } };
 }
+
+test('workflow hint is local, once per task, and does not configure credentials or call Jev', async () => {
+  const f = await fixture('workflow');
+  assert.equal((await prepareAuto({ roots: [f.root], skill_files: [f.skill] })).mode, 'workflow');
+  const deps = { configure: async () => assert.fail('No credential/provider work'), route: async () => assert.fail('No model request') };
+  const first = await runAutoHook(f.event, f.installed.config_file, deps);
+  assert.match(first.hookSpecificOutput.additionalContext, /zero model calls/);
+  assert.doesNotMatch(first.hookSpecificOutput.additionalContext, /candidate ID|Inspect candidate/);
+  assert.equal(await runAutoHook({ ...f.event, prompt: 'Now examine a different set of logs' }, f.installed.config_file, deps), null);
+  const last = JSON.parse(await readFile(path.join(path.dirname(f.installed.config_file), 'last-run.json')));
+  assert.equal(last.status, 'SKIPPED_WORKFLOW_HINT');
+  assert.equal(last.metrics.workflow_inference_calls, 0);
+  assert.equal(JSON.parse(await readFile(path.join(path.dirname(f.installed.config_file), 'sessions', last.session + '.json'))).count, 0);
+  assert(await runAutoHook({ ...f.event, session_id: 'another-task' }, f.installed.config_file, deps));
+});
+
+test('mode changes preserve prior decisions and refresh preserves the selected mode', async () => {
+  const f = await fixture(); let calls = 0;
+  const deps = { configure: async () => {}, route: async () => { calls++; return { status: 'NO_MATCH' }; } };
+  await runAutoHook(f.event, f.installed.config_file, deps);
+  const home = path.dirname(path.dirname(f.installed.config_file));
+  const changed = await setAutoMode('workflow', { home });
+  assert.equal(JSON.parse(await readFile(changed.backup)).mode, 'skills');
+  assert(await runAutoHook(f.event, f.installed.config_file, deps));
+  await refreshAuto({ home });
+  assert.equal(JSON.parse(await readFile(f.installed.config_file)).mode, 'workflow');
+  await setAutoMode('skills', { home });
+  assert.equal(await runAutoHook(f.event, f.installed.config_file, deps), null);
+  assert.equal(calls, 1);
+  await assert.rejects(setAutoMode('unknown', { home }), /INVALID_AUTO_MODE/);
+});
 
 test('installation preserves other hooks and backs up bytes; never grants trust', async () => {
   const f = await fixture();

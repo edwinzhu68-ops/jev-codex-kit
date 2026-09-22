@@ -1,11 +1,26 @@
-# Automatic, quiet Codex skill routing
+# Automatic, quiet Codex entry
 
 The native `UserPromptSubmit` hook starts on normal user messages. Codex setup
 installs it together with the two dedicated skills. It can be disabled. After
 one-time setup and native Codex trust, users do not name Jev, start a terminal,
-or manually run a router for each task. Jev recommends a skill; Codex still owns
-reading the skill, execution, evidence gathering and acceptance. This does not
-turn Jev into a code generator or autonomous executor.
+or manually run a router for each task. New installations use **workflow mode**:
+one local work-sharing hint per task/catalog, with zero model calls and no prompt
+upload. Codex can then select a scoped batch or UI workflow when useful. Codex
+still owns execution, evidence gathering and acceptance. The hint is not proof
+that Jev ran, a continuous supervisor, or a guarantee of future host behavior.
+
+The earlier paid skill router remains available as **skills mode**. Existing
+configurations keep their previous mode on upgrade. To change it explicitly:
+
+```sh
+node bin/jev-kit.mjs auto mode workflow
+# Optional: return to per-prompt semantic skill routing
+node bin/jev-kit.mjs auto mode skills
+```
+
+Mode changes back up configuration and preserve decisions and native hook trust.
+The default changed after a measured task acquired an unnecessary configuration
+lookup from the old routing advisory. See the [workload diagnostic](evaluations/workload-benefit-20260922.md).
 
 ## Setup
 
@@ -18,6 +33,7 @@ authorized project roots and the explicit installed skills you want considered:
 
 ```json
 {
+  "mode": "workflow",
   "roots": ["/absolute/path/to/project"],
   "skill_files": ["/absolute/path/to/skills/jev-codex-kit/SKILL.md"]
 }
@@ -44,27 +60,33 @@ running Desktop task loaded the hook. Check an actual next-task hook receipt.
 
 ## Runtime contract
 
-- Eligible current prompt plus full descriptions of 1-19 selected skills goes to
+- Both modes use only the configured roots and validate the selected skill hashes.
+  Workflow mode emits a fixed local hint once per task/catalog and records
+  `WORKFLOW_HINT`; later eligible prompts record `SKIPPED_WORKFLOW_HINT`.
+  It does not decrypt credentials, query Jev, or ask the host to look up a candidate
+  ID. The native hook process still starts for submit events: zero model calls
+  does not mean zero local overhead. It does not intercept tool results or Stop.
+- **Skills mode only:** eligible current prompt plus full descriptions of 1-19 selected skills goes to
   TypeSafe. No transcript, skill body, repository source, or arbitrary directory
   scan is sent. This is a curated candidate scope, not the client's full registry.
 - Empty input, common continuation/confirmation/stop messages, arithmetic-only input,
   code blocks, prompts over 1,800 characters, and common sensitive patterns skip
-  locally. Pattern filtering is not a guarantee of personal-data removal; enable
-  only in projects where sending eligible task descriptions is authorized.
+  locally in both modes. Pattern filtering is not a guarantee of personal-data
+  removal; use skills mode only where sending eligible task descriptions is authorized.
 - Current task context stays with Codex. A standalone prompt is not the whole
   conversation; this hook cannot resolve all ambiguous follow-ups. Recommendations
   never override explicit required skills or project restrictions.
-- One workflow request per eligible new prompt/catalog combination. There is no
+- Skills mode makes one workflow request per eligible new prompt/catalog combination. There is no
   six-per-task or thirty-per-day counter. Those v0.4.0 numbers were local policy,
   not provider quotas. Attempted unchanged judgments are not replayed. Legacy
   attempted prompt hashes remain blocked during migration; old receipts survive.
   SDK transport retries may occur within the deadline, so one workflow is not
   an exact HTTP-request or billing guarantee.
-- Five-second inference timeout, eight-second handler watchdog, twelve-second
+- Skills mode has a five-second inference timeout. Both modes have an eight-second handler watchdog and twelve-second
   native hook deadline. SDK/credential startup adds overhead; no zero-latency or
   end-to-end speedup claim is made. Concurrent handlers in the same task skip;
   separate tasks use separate locks and decision records.
-- Failure or uncertainty affects that unchanged decision, not the whole task/day.
+- In skills mode, failure or uncertainty affects that unchanged decision, not the whole task/day.
   If an uncertain result names a valid candidate, the host receives an explicit
   REVIEW_REQUIRED advisory to inspect it, not an accepted skill recommendation.
   No-match without a candidate and errors do not inject a made-up selection.
@@ -72,7 +94,7 @@ running Desktop task loaded the hook. Check an actual next-task hook receipt.
   and emit no suggestion until an explicit `auto refresh`; a previous SUGGESTED
   result is not left as the latest status after a stale-skill attempt.
 - Normal operation emits no chat message, warning, terminal window or error text.
-  A selected skill is passed as a compact developer-context advisory containing
+  In skills mode a selected skill is passed as a compact developer-context advisory containing
   only its opaque ID and the local config pointer. Codex may still display native
   hook/tool activity; its `suppressOutput` is currently not implemented.
 - Automatic routing does not guarantee that the host invokes a recommended skill
@@ -83,11 +105,12 @@ running Desktop task loaded the hook. Check an actual next-task hook receipt.
 `node bin/jev-kit.mjs auto status` reads the latest private status without a model
 call. `NO_OBSERVED_RUN` means no eligible invocation was observed, not success.
 Use `auto status --session ID` for one task; the default is latest across tasks.
-Local `auto/receipts` stores the eligible prompt, candidate metadata and raw model
-result for audit. Keep it private; do not commit it. `last-run.json` stores only
+In skills mode, local `auto/receipts` stores the eligible prompt, candidate metadata
+and raw model result for audit. Keep it private; do not commit it. Workflow mode
+adds no inference receipt. `last-run.json` stores only
 hashed prompt/session identifiers, status, timing and usage.
 
-`auto disable` pauses this router locally; `auto enable` enables it without
+`auto disable` pauses this hook locally; `auto enable` enables it without
 changing pinned skill hashes. After reviewing an updated skill, run `auto refresh`
 to back up the config and accept its new bytes. Neither operation grants native
 hook trust or clears decision history. `auto uninstall` backs up hooks.json and

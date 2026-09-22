@@ -2,8 +2,13 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
-import { runEvaluate } from '../vendor/jev-mcp/dist/tools/evaluate.js';
 import { MODEL, runsHome } from './settings.mjs';
+
+// Local catalogs, required skills and workflow hints do not need the provider SDK.
+const evaluateOnDemand = async (...args) => {
+  const { runEvaluate } = await import('../vendor/jev-mcp/dist/tools/evaluate.js');
+  return runEvaluate(...args);
+};
 
 const id = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_:.-]{0,79}$/);
 export const skillCandidateSchema = z.object({
@@ -41,7 +46,7 @@ export function skillRequest(input) {
   return { model: MODEL, state: { goal: input.goal, skills: candidates.map(({ name, description }) => ({ name, description })) }, questions };
 }
 
-export async function routeSkills(raw, { evaluate = runEvaluate, signal, receiptRoot = path.join(runsHome(), 'skills') } = {}) {
+export async function routeSkills(raw, { evaluate = evaluateOnDemand, signal, receiptRoot = path.join(runsHome(), 'skills') } = {}) {
   signal?.throwIfAborted();
   const input = skillRouteSchema.parse(raw);
   if (new Set(input.candidates.map(c => c.id)).size !== input.candidates.length || new Set(input.required_ids).size !== input.required_ids.length) throw Error('DUPLICATE_ID');

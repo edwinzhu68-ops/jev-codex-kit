@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "note": "Frozen exploratory fixtures, not production tasks. Ground truth recorded before evaluation.",
+  "verification": [
+    {
+      "id": "c1",
+      "claim": "The installed automatic hook accepts PostToolUse events.",
+      "evidence": "runAutoHook(event, configFile) starts with: if (event.hook_event_name !== 'UserPromptSubmit' || !eligiblePrompt(event.prompt) || typeof event.session_id !== 'string' || !event.session_id || typeof event.cwd !== 'string') return null;",
+      "expected": "contradicted"
+    },
+    {
+      "id": "c2",
+      "claim": "The auto hook emits an explicit host advisory for an uncertain selection naming a valid enabled candidate.",
+      "evidence": "const tentative = result.selection?.choice; if (result.status === 'REVIEW_REQUIRED' && candidates.some(c => c.id === tentative && c.enabled)) return hookContext(tentative, configFile, true); return null; hookContext marks reviewRequired as 'REVIEW_REQUIRED, not an accepted recommendation'.",
+      "expected": "verified"
+    },
+    {
+      "id": "c3",
+      "claim": "Source preparation never excludes an excerpt whose counterevidence probability exceeds 0.05.",
+      "evidence": "const excluded=filtering&&relevant<=.05&&counter<=.05; selections return disposition: excluded?'exclude':!filtering||relevant>=.95||counter>=.95?'retain':'review'. retained=collected.filter(s=>selections.find(x=>x.id===s.id).disposition!=='exclude').",
+      "expected": "verified"
+    },
+    {
+      "id": "c4",
+      "claim": "Pinned evidence with no checks or labels requires a Jev inference request.",
+      "evidence": "const needsFilter=s=>!s.pinned&&!checkEvidence.has(s.id); const count=input.sources.filter(needsFilter).length*2+input.checks.length+(input.labels?input.sources.length:0); const result=count?await evaluate(request):{model:null,mode:'deterministic_collection',answers:{},usage:{input_tokens:0,output_tokens:0}};",
+      "expected": "contradicted"
+    },
+    {
+      "id": "c5",
+      "claim": "The supplied validation establishes a real Jev-selected Windows desktop click.",
+      "evidence": "VALIDATION.md: Windows Computer Use adapter is implemented and contract-tested. The installed official sky plugin returned Calculator's window but no accessibility tree; Notepad had no targetable window. A real Jev-selected Windows click is NOT VERIFIED.",
+      "expected": "unsupported"
+    },
+    {
+      "id": "c6",
+      "claim": "This fixture-only result proves the kit speeds up arbitrary coding tasks.",
+      "evidence": "VALIDATION.md: Real browser + real Jev: two clicks followed by independent readback. The page is a disposable local fixture. No A/B comparison of a real coding task was run.",
+      "expected": "unsupported"
+    },
+    {
+      "id": "c7",
+      "claim": "Foreman's worker creates a Codex thread before starting its first turn.",
+      "evidence": "thread_response=await self._request('thread/start',{'cwd':str(repository),'serviceName':'foreman'}); self.thread_id=thread_response['thread']['id']; turn_response=await self._request('turn/start',{'threadId':self.thread_id,'input':[{'type':'text','text':record.mission}]});",
+      "expected": "verified"
+    },
+    {
+      "id": "c8",
+      "claim": "The shown quality guard independently supplies raw test logs and a diff to its judgment model.",
+      "evidence": "const message=text(payload.last_assistant_message); const response=await asker.ask({context:QUALITY_CONTEXT,result:redactText(message,config.privacyMode).text.slice(0,MAX_STATE_CHARS)},qualityQuestions()); QUALITY_CONTEXT is a fixed description of judging an agent's final message. No diff/log collection is in this handler.",
+      "expected": "contradicted"
+    }
+  ],
+  "triage": {
+    "labels": [
+      {
+        "id": "configuration",
+        "description": "Tool registration, initialization, or visibility in the current task is the issue."
+      },
+      {
+        "id": "orchestration",
+        "description": "Tools are available, but the workflow does not trigger them at useful execution stages."
+      },
+      {
+        "id": "evidence",
+        "description": "The reported completion or verification conclusion does not match the available evidence."
+      },
+      {
+        "id": "browser_target",
+        "description": "Web-page control identity, stale page state, or ambiguous browser targets cause wrong actions."
+      },
+      {
+        "id": "native_accessibility",
+        "description": "A native desktop app has no usable accessibility tree or native controls."
+      }
+    ],
+    "reports": [
+      {
+        "id": "r1",
+        "text": "新建任务里能找到 Jev 工具列表。开工后连续读取很多文件，却一直没有再调用；发一句提醒才调用。",
+        "expected": "orchestration"
+      },
+      {
+        "id": "r2",
+        "text": "服务器显示运行，但当前任务的工具清单里没有它。同一项目的新任务能看到这个工具。",
+        "expected": "configuration"
+      },
+      {
+        "id": "r3",
+        "text": "命令输出只记录应用启动。交付报告却写成了保存和重载都已通过，日志里没有这两项操作。",
+        "expected": "evidence"
+      },
+      {
+        "id": "r4",
+        "text": "网页按钮点击后已经跳到新页面，自动操作却沿用上一页的控件编号，下一步点击了错误位置。",
+        "expected": "browser_target"
+      },
+      {
+        "id": "r5",
+        "text": "计算器窗口能选中，但是没有返回无障碍控件树，无法得到任何真实可点击控件。",
+        "expected": "native_accessibility"
+      },
+      {
+        "id": "r6",
+        "text": "审查接口明确返回需要复核，完成报告却把它记录为自动验收通过。",
+        "expected": "evidence"
+      },
+      {
+        "id": "r7",
+        "text": "浏览器页面有两个同名的继续按钮，候选信息没有说明所属弹窗，导致选中了另一个弹窗里的按钮。",
+        "expected": "browser_target"
+      },
+      {
+        "id": "r8",
+        "text": "判断工具本身能够正常执行。任务开头选过一次技能，之后测试失败和准备交付时都没有相应的触发入口。",
+        "expected": "orchestration"
+      }
+    ]
+  }
+}

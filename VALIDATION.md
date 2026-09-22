@@ -1,6 +1,14 @@
 # Validation record
 
-Release candidate 0.4.1. No blanket claims about speed, savings or semantic accuracy.
+Release candidate 0.4.2. No blanket claims about speed, savings or semantic accuracy.
+
+- Windows suite: **81/81 PASS**; after deferring the unused provider import, the affected hook/router/entry suites passed **32/32**. The original local companion passed **20/20**. CI for the release commit determines Linux/macOS results.
+- Real native Codex app-server hook -> local receiving model fixture: **PASS**. The unchanged trusted hook emitted `WORKFLOW_HINT`, `model: null`, zero inference/questions. Its observed Windows hook duration was 1,859 ms: this is not zero local overhead. No real generative provider was used by this transport check. Existing Desktop tasks were not restarted or proven refreshed.
+- The installed original companion launcher returned `jev-evidence-text-v1` through actual stdio MCP with both tools present, two complete pinned originals/hashes, no stderr and zero inference. Full structured results remain compatible. Existing long-lived processes may still emit the previous text layout.
+- Workload diagnostic: Chinese report classification **8/8 in 685 ms** observed call time; source verification **3/8 exact labels**, including three direction errors and seven review/escalation items. The Codex classification baseline incurred a hook-induced config read, so its timing cannot establish a fair speed ratio. Full [method and limits](docs/evaluations/workload-benefit-20260922.md).
+- Offline presentation of that recorded response retained all originals and judgments while reducing text from **8,769 to 4,887 characters**. The whole serialized MCP result, including the unchanged structured contract, fell from **18,454 to 14,254 characters**. Character reduction is not a measured token or billing saving.
+
+Historical v0.4.1 evidence:
 
 - Final Windows full suite: **77/77 PASS**. A concurrent status-write test exposed Windows rename contention; task receipts now remain authoritative and the status command selects complete per-task records. The affected suites passed **23/23**, then the full suite passed. See release-commit CI for other platforms.
 - Regression coverage includes 42 distinct prompts despite old 6/30 counters; 40 real HTTP loopback actions across five chunks; two simultaneous tasks; Chinese payloads above 24 KB but within the character contract; stale-skill refresh; preserved legacy dedup; BOM source discovery; Lua/Luau ranges; backed-up skill upgrade/removal; idle shutdown and simultaneous broker launches.
