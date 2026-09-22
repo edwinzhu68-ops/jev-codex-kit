@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, rmdir, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rmdir, stat, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { rmdirSync } from 'node:fs';
 import { hashText, assertNoSecret, routeSkills, skillCandidateSchema } from './skill-router.mjs';
@@ -49,7 +49,11 @@ export async function runAutoHook(event, configFile, {
   if (event.hook_event_name !== 'UserPromptSubmit' || !eligiblePrompt(event.prompt) || typeof event.session_id !== 'string' || !event.session_id || typeof event.cwd !== 'string') return null;
   const home = path.dirname(configFile);
   const config = JSON.parse(await readFile(configFile, 'utf8'));
-  if (!Array.isArray(config.roots) || config.roots.some(r => typeof r !== 'string' || !path.isAbsolute(r)) || !withinRoot(event.cwd, config.roots)) return null;
+  if (!Array.isArray(config.roots) || config.roots.some(r => typeof r !== 'string' || !path.isAbsolute(r))) return null;
+  // macOS /var aliases and Windows short paths must resolve to the same scope;
+  // conversely a junction inside an allowed root must not authorize its outside target.
+  const canonicalCwd = await realpath(event.cwd);
+  if (!withinRoot(canonicalCwd, config.roots)) return null;
   const candidates = await freshSkills(config);
   const lock = path.join(home, 'running.lock');
   try { await mkdir(lock); } catch (e) { if (e.code === 'EEXIST') return null; throw e; }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -76,6 +76,16 @@ test('stale skill and outside-root tasks never reach the model', async () => {
   await writeFile(f.skill, 'changed');
   await assert.rejects(runAutoHook(f.event, f.installed.config_file, deps), /STALE/);
   assert.equal(calls, 0);
+});
+
+test('canonical scope accepts aliases of approved roots and rejects junction escapes',async()=>{
+  const f=await fixture(), outside=await mkdtemp(path.join(os.tmpdir(),'jev-alias-'));
+  const alias=path.join(outside,'approved-alias'), escape=path.join(f.root,'outside-link');
+  await symlink(f.root,alias,process.platform==='win32'?'junction':'dir');
+  await symlink(outside,escape,process.platform==='win32'?'junction':'dir');
+  let calls=0;const deps={configure:async()=>{},route:async()=>{calls++;return {status:'NO_MATCH'};}};
+  await runAutoHook({...f.event,cwd:alias},f.installed.config_file,deps);assert.equal(calls,1);
+  await runAutoHook({...f.event,cwd:escape,prompt:'Review another diff'},f.installed.config_file,deps);assert.equal(calls,1);
 });
 
 test('CLI handler errors produce exit zero, empty stdout and empty stderr', async () => {
