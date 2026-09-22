@@ -19,7 +19,7 @@ const help = `Jev Coding Kit 0.4.2 (repository/package: jev-codex-kit)
   Clients: codex, claude, cursor, opencode, pi, vscode, none
   --codex                                    Compatibility alias for --client codex
   doctor                                      Local checks only; no paid request
-  serve                                       Start stdio MCP with all 12 tools
+  serve                                       Start stdio MCP with all 13 tools
   call TOOL INPUT.json NEW_OUTPUT.json         Invoke one tool; refuse existing output
   config [--client CLIENT]                     Export client-specific configuration (no key)
   skills catalog DIRECTORY NEW_CATALOG.json   Inspect direct skill folders offline

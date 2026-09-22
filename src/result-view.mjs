@@ -7,6 +7,12 @@ export function evidenceTextView(result) {
   return {
     format: 'jev-evidence-text-v1', run_id: result.run_id, status: result.status, advisory_only: true,
     root: result.root,
+    ...(result.format === 'jev-work-packet-v1' ? {
+      format: 'jev-work-text-v1', task_id: result.task_id, task: result.task, executor: result.executor,
+      preparation_status: result.preparation_status, host_review_required: result.host_review_required,
+      constraints: result.constraints, acceptance: result.acceptance, groups: result.groups,
+      unassigned: result.unassigned, review_items: result.review_items, packet_path: result.packet_path,
+    } : {}),
     evidence: result.evidence.map(s => {
       const selection = selections.get(s.id);
       const item = { id: s.id, path: s.path, lines: [s.start_line, s.end_line], text: s.text,

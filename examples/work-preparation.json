@@ -1,0 +1,21 @@
+{
+  "task_id": "queue-repair-example",
+  "task": "将队列修复材料分组，为执行者列出需要核对的前提。不要推断未提供的源码或运行结果。",
+  "root": "/absolute/path/to/jev-codex-kit",
+  "executor": "main",
+  "constraints": ["只允许修改队列模块；Host 由其他作者持有。"],
+  "acceptance": ["拒绝的命令不得改变队列状态。", "必须运行相关测试并保留原始读数。"],
+  "sources": [
+    { "id": "issue", "path": "examples/work-materials/issue.txt" },
+    { "id": "ownership", "path": "examples/work-materials/ownership.txt" },
+    { "id": "test", "path": "examples/work-materials/test.txt" }
+  ],
+  "labels": [
+    { "id": "defect", "description": "需要诊断修复的错误现象" },
+    { "id": "coordination", "description": "文件作者归属与写入约束" },
+    { "id": "validation", "description": "测试执行状态与验收证据" }
+  ],
+  "checks": [
+    { "id": "test_passed", "claim": "队列测试已运行且通过。", "evidence_ids": ["test"] }
+  ]
+}

@@ -27,6 +27,9 @@ test('workflow reminder is local on each eligible work prompt and never calls Je
   const first = await runAutoHook(f.event, f.installed.config_file, deps);
   assert.match(first.hookSpecificOutput.additionalContext, /zero model calls/);
   assert.match(first.hookSpecificOutput.additionalContext, /before each substantive task/);
+  assert.match(first.hookSpecificOutput.additionalContext, /main host will execute or delegate/);
+  assert.match(first.hookSpecificOutput.additionalContext, /Every different subagent assignment needs its own task_id/);
+  assert.match(first.hookSpecificOutput.additionalContext, /Pass the packet, source hashes and receipt to subagents/);
   assert.doesNotMatch(first.hookSpecificOutput.additionalContext, /candidate ID|Inspect candidate/);
   const next = await runAutoHook({ ...f.event, prompt: 'Now examine a different set of logs' }, f.installed.config_file, deps);
   assert.match(next.hookSpecificOutput.additionalContext, /before each substantive task/);

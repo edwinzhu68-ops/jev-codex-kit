@@ -1,5 +1,15 @@
 # Validation record
 
+## Unreleased task-specific work preparation — 2026-09-22
+
+- `jev_prepare_work` now prepares a packet for main-host execution or one subagent assignment. Different tasks require distinct caller-assigned task IDs and independent preparation, including when sources overlap. There is no cross-task cache or global ID registry; every invocation creates a fresh run.
+- All supplied sources are pinned. The packet and compact MCP text preserve original excerpts/hashes, constraints, acceptance, grouping suggestions, raw check results and review items. Host review remains required. This does not dispatch agents or generate arbitrary task plans.
+- Full local suite: **87/87 PASS**. New checks cover independent model calls/receipts for different tasks sharing files, context binding, complete originals, uncertain groups, unsupported checks, stale input, sensitive/oversized context and provider failure. Real stdio and Pi registration expose 13 tools; deterministic work-packet requests use zero inference. Vendor build PASS (transpilation only).
+- One real CLI call on the public synthetic Chinese example: `jev-1.13.0`, 4 questions, 1 workflow inference, 1761 input / 195 output tokens, 836.45 ms inference and 845.56 ms preparation total (not CLI/host end-to-end latency). Defect and test-status materials were assigned to their expected groups. Ownership's raw choice was coordination (confidence 0.86, probability 0.89), below the existing threshold, so it stayed unassigned for review. The false test-passed claim was contradicted (confidence 0.94). Overall status **REVIEW_REQUIRED**, not an all-clear. No reroll or threshold change.
+- Independently compared all 3 returned originals and file hashes against disk: PASS. Kept private packet/receipt locally; no whole conversation or game source was sent. This is a small synthetic diagnostic, not production accuracy or savings evidence.
+- Refreshed only the existing hook's skill hashes with backup. Two direct invocations of the installed handler returned the main-host/subagent and separate-task reminder. Hook mode/trust remained unchanged; direct handler output does not prove every already-running task follows the rule. Current tasks can select the documented CLI when their MCP registry lacks the new tool.
+- NOT RUN: real game implementation with this packet, cross-task coding A/B, Linux/macOS verification, new GitHub Release. Task splitting, dependency/ownership adjudication, execution and final acceptance remain host responsibilities.
+
 ## Unreleased source update: pre-work reminder — 2026-09-22
 
 - The global Codex rule now requires a zero-model, purpose-based Jev preflight before each new substantive task or independent work package. It preserves on-demand calls and excludes deterministic work and repeat judgments.

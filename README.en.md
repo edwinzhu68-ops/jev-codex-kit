@@ -4,7 +4,9 @@ New: [quiet automatic Codex entry](docs/automatic-codex.md) and a [CUA/browser i
 
 The current `main` branch emits a zero-Jev-call pre-work reminder for every eligible substantive prompt in `workflow` mode; short continuations still require the host's task instructions. Paid skill routing remains optional. In the 0.4.2 [workload diagnostic](docs/evaluations/workload-benefit-20260922.md), eight Chinese reports were classified in about 0.69 seconds with 8/8 expected labels, while source-claim verification had errors and extensive review overhead. Evidence text removes repeated metadata without cutting retained originals. These results do not establish whole-task coding speedups.
 
-One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery, evidence preparation and task-based skill suggestions (12 tools). Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
+One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery, evidence preparation, shared work preparation and task-based skill suggestions (13 tools on main). Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
+
+New on main, not in v0.4.2: [work preparation](docs/work-preparation.md) before main-host execution or subagent handoff. Each distinct assignment gets its own task_id and preparation, even with shared files. `jev_prepare_work` batches grouping and checks while preserving every original, constraint and acceptance requirement. Only that same task's packet passes to its executor without repeating unchanged judgments.
 
 New: [skill routing](docs/skill-routing.md) preserves host-required skills and offers no-match/uncertainty exits. [First diagnostic run](docs/evaluations/skill-routing-20260922.md): Jev matched 8/8 synthetic labels versus 6/8 for a simple lexical baseline. This is not a Codex performance or token-savings benchmark.
 

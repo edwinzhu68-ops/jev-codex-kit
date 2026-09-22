@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `jev_prepare_work`: a shared packet for main-host execution and subagent handoff, preserving all originals, constraints, acceptance and review items. Reuse evidence validation and one bounded inference request; no automatic dispatch or model selection.
 - Emit the zero-model `workflow` pre-work reminder for every eligible substantive prompt in a task, while short continuations and excluded prompts still skip the hook. Keep Jev judgments on demand and preserve the existing skill-routing mode.
 
 ## 0.4.2

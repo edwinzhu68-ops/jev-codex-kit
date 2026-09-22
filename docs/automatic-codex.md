@@ -1,5 +1,12 @@
 # Automatic, quiet Codex entry
 
+The current reminder covers preparation before both main-host execution and
+subagent delegation. Use [work preparation](work-preparation.md) for unresolved
+batch grouping/checks, then pass the same evidence packet to the executor without
+repeating unchanged judgments within that one task. Every different assignment
+requires its own task_id and preparation even with shared sources. The hook itself
+does not call Jev in workflow mode.
+
 The native `UserPromptSubmit` hook starts on normal user messages. Codex setup
 installs it together with the two dedicated skills. It can be disabled. After
 one-time setup and native Codex trust, users do not name Jev, start a terminal,

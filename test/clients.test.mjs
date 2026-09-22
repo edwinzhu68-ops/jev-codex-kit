@@ -59,13 +59,14 @@ test('Claude, Pi and VS Code write only their intended scoped files',async()=>{
   assert.ok((await readFile(path.join(f.env.PI_CODING_AGENT_DIR,'extensions','jev-kit.ts'),'utf8')).includes('attachPi'));
   assert.equal(JSON.parse(await readFile(path.join(f.root,'.vscode','mcp.json'),'utf8')).servers['jev-kit'].type,'stdio');
 });
-test('Pi native adapter registers 12 tools and performs actual MCP evidence/status calls without inference',async()=>{
+test('Pi native adapter registers 13 tools and performs actual MCP evidence/status calls without inference',async()=>{
   const f=await fixture(),tools=new Map(),events=new Map(),commands=new Map(),messages=[];
   const api={registerTool:t=>tools.set(t.name,t),on:(name,fn)=>events.set(name,fn),registerCommand:(name,fn)=>commands.set(name,fn),sendMessage:(msg,opts)=>messages.push({msg,opts})};
   const ext=await attachPi(api,{kitHome:f.kit});
   try{
-    assert.equal(tools.size,12);assert.equal(tools.get('jev_prepare_evidence').parameters.type,'object');
-    await commands.get('jev-status').handler();assert.match(messages[0].msg.content,/12 tools connected/);assert.equal(messages[0].opts.triggerTurn,false);
+    assert.equal(tools.size,13);assert.equal(tools.get('jev_prepare_evidence').parameters.type,'object');
+    assert.equal(tools.get('jev_prepare_work').parameters.type,'object');
+    await commands.get('jev-status').handler();assert.match(messages[0].msg.content,/13 tools connected/);assert.equal(messages[0].opts.triggerTurn,false);
     const result=await tools.get('jev_prepare_evidence').execute('test',{task:'Collect proof',root:f.root,sources:[{id:'proof',path:'proof.txt',pinned:true}]},new AbortController().signal);
     assert.equal(result.details.status,'EVIDENCE_READY');assert.equal(result.details.metrics.workflow_inference_calls,0);
     await assert.rejects(tools.get('jev_prepare_evidence').execute('bad',{task:'Invalid root',root:f.home,sources:[{id:'proof',path:'project/proof.txt',pinned:true}]}),/no valid judgment/);

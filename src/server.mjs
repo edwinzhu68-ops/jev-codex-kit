@@ -9,7 +9,7 @@ export async function serve() {
   for (const [name, tool] of catalog) server.registerTool(name, {
     description: tool.description,
     inputSchema: tool.schema,
-    annotations: { readOnlyHint: !['jev_code_brief', 'jev_prepare_evidence', 'jev_route_skills'].includes(name), destructiveHint: false, idempotentHint: false, openWorldHint: true }
+    annotations: { readOnlyHint: !['jev_code_brief', 'jev_prepare_evidence', 'jev_prepare_work', 'jev_route_skills'].includes(name), destructiveHint: false, idempotentHint: false, openWorldHint: true }
   }, async (args, extra) => {
     try {
       const result = await executeTool(catalog, name, args, extra.signal);

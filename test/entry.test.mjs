@@ -64,13 +64,13 @@ test('CLI produces actual source evidence without key; refuses output overwrite 
   const denied = path.join(f.temp,'denied.json'); assert.equal(f.run('call','jev_prepare_evidence',input,denied).status,1);
   assert.equal(JSON.parse(await readFile(denied,'utf8')).status,'ERROR');
 });
-test('actual stdio exposes 12 tools and returns deterministic evidence and required skills with no provider', async () => {
+test('actual stdio exposes 13 tools and returns work packets, evidence and required skills with no provider', async () => {
   const f = await fixture(); assert.equal(f.run('setup','--root',f.root,'--no-key-prompt').status,0);
   const transport = new StdioClientTransport({command:process.execPath,args:[entry,'serve'],env:f.env,stderr:'pipe'});
   let stderr=''; transport.stderr?.on('data',c=>stderr+=c.toString());
   const client = new Client({name:'kit-test',version:'1'});
   try {
-    await client.connect(transport); const tools = await client.listTools(); assert.equal(tools.tools.length,12);
+    await client.connect(transport); const tools = await client.listTools(); assert.equal(tools.tools.length,13);
     assert.ok(tools.tools.some(t=>t.name==='jev_code_brief'));
     const routed = await client.callTool({name:'jev_route_skills',arguments:{goal:'User requires review',candidates:[{id:'review',name:'Review',description:'Review code changes'}],required_ids:['review']}});
     assert.equal(routed.structuredContent.status,'REQUIRED_SKILLS');
@@ -83,13 +83,18 @@ test('actual stdio exposes 12 tools and returns deterministic evidence and requi
     assert.equal(view.evidence[0].file_sha256,result.structuredContent.evidence[0].file_sha256);
     assert.deepEqual(view.checks,result.structuredContent.checks);
     assert.equal(result.structuredContent.metrics.workflow_inference_calls,0);
+    const prepared = await client.callTool({name:'jev_prepare_work',arguments:{task_id:'inventory-repair',task:'Prepare repair',executor:'main',root:f.root,sources:[{id:'proof',path:'proof.txt'}],acceptance:['Run the inventory test']}});
+    assert.equal(prepared.structuredContent.status,'WORK_PREPARED');
+    assert.equal(prepared.structuredContent.metrics.workflow_inference_calls,0);
+    assert.equal(JSON.parse(prepared.content[0].text).format,'jev-work-text-v1');
+    assert.deepEqual(prepared.structuredContent.acceptance,['Run the inventory test']);
     const rejected = await client.callTool({name:'jev_evaluate',arguments:{model:'other-model',state:'x',questions:{a:{type:'noul',instructions:'Does x exist?'}}}});
     assert.equal(rejected.isError,true);
   } finally { await client.close(); }
   assert.equal(stderr,'');
 });
 test('all recipe schemas and runners exist; envelope rejects oversized calls/model overrides', async () => {
-  const catalog = await toolCatalog(); assert.equal(catalog.size,12);
+  const catalog = await toolCatalog(); assert.equal(catalog.size,13);
   for(const t of catalog.values()){assert.equal(typeof t.schema.parse,'function');assert.equal(typeof t.run,'function');}
   await assert.rejects(executeTool(catalog,'jev_evaluate',{state:'x'.repeat(24001),questions:{}}),/INPUT_CHARACTER_LIMIT/);
   await assert.rejects(executeTool(catalog,'jev_evaluate',{state:'x',questions:{},model:'other'}),/MODEL_OVERRIDE/);

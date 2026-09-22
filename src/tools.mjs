@@ -3,6 +3,7 @@ import { briefSchema, prepareBrief } from './pijev-bridge.mjs';
 import { readSettings, runsHome, MODEL } from './settings.mjs';
 import path from 'node:path';
 import { skillRouteSchema, routeSkills } from './skill-router.mjs';
+import { workPreparationSchema, prepareWork } from './work-preparation.mjs';
 
 const recipes = [
   ['evaluate','Evaluate','evaluate'], ['coding_loop','CodingLoop','coding-loop'],
@@ -23,6 +24,11 @@ const descriptions = {
 };
 export async function toolCatalog() {
   const map = new Map();
+  map.set('jev_prepare_work', {
+    schema: workPreparationSchema,
+    description: 'Prepare one task-specific source-linked work packet for main-host execution or one subagent assignment. Each different task needs its own task_id and preparation, even with shared sources. Batch-group explicit materials and check supplied claims; preserve all originals, constraints and acceptance. No model selection, spawning or edits. No labels/checks means zero inference.',
+    run: async (args, context) => prepareWork(args, { allowedRoots: (await readSettings()).roots, receiptRoot: path.join(runsHome(), 'work'), signal: context.signal })
+  });
   map.set('jev_route_skills', {
     schema: skillRouteSchema,
     description: 'Suggest one host-confirmed skill for a task from at most 19 complete candidate descriptions. Preserve required skills without inference, allow no-match and uncertainty. Does not install, load, execute or scan skills. Not a per-message hook.',
