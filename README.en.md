@@ -1,6 +1,8 @@
 # Jev Coding Kit
 
-One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery and evidence preparation. Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
+One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery, evidence preparation and task-based skill suggestions (12 tools). Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
+
+New: [skill routing](docs/skill-routing.md) preserves host-required skills and offers no-match/uncertainty exits. [First diagnostic run](docs/evaluations/skill-routing-20260922.md): Jev matched 8/8 synthetic labels versus 6/8 for a simple lexical baseline. This is not a Codex performance or token-savings benchmark.
 
 Installers support Codex, Claude Code, Cursor, OpenCode, Pi and VS Code. Pi uses a native extension backed by the same server. Repository/package/skill identifiers remain `jev-codex-kit`. [Client setup and verification boundaries](docs/clients.md) · [Contributing](CONTRIBUTING.md) · [Latest release](https://github.com/edwinzhu68-ops/jev-codex-kit/releases/latest).
 

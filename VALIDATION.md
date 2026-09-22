@@ -1,6 +1,11 @@
 # Validation record
 
-Release candidate 0.2.0. No blanket claims about speed, savings or semantic accuracy.
+Release candidate 0.3.0. No blanket claims about speed, savings or semantic accuracy.
+
+- Current local Windows suite: **44/44 PASS**, including real MCP registration of all 12 tools, required-skill zero-inference behavior, offline catalog CLI, stale catalog and overwrite rejection, schema/secret/request limits, uncertainty and failed-response handling.
+- Live skill-routing diagnostic: eight distinct synthetic tasks, fixed four-skill catalog, `jev-1.13.0`, expected result 8/8 versus lexical baseline 6/8; 2216 ms summed route time. Raw report, dataset, methodology and explicit limits are in `docs/evaluations/skill-routing-20260922.md`. No Codex workload/token reduction or coding-task speed comparison was measured.
+
+Historical v0.2.0 evidence:
 
 - Current local Windows suite: **33/33 PASS**, including the final local release check. New cases cover client dialects, secret-free config export, JSONC preservation/backups, conflict preflight, scoped installation paths and the Pi adapter using an actual MCP subprocess. See the release commit CI for platform results.
 - Real Claude Code 2.1.172 (`mcp get`) and OpenCode 1.18.14 (`mcp list`) connected to the generated registrations in isolated config directories. No paid model task was run and existing client registrations were not edited.

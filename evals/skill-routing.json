@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "description": "Small author-written synthetic diagnostic set, frozen before first live evaluation. Not a population sample or a coding-host benchmark.",
+  "candidates": [
+    {"id":"patch_review","name":"Patch review","description":"Inspect a proposed source-code diff for correctness bugs and regressions. Read-only review; does not implement changes, draw charts or write release notes."},
+    {"id":"save_recovery","name":"Godot save recovery","description":"Diagnose and repair Godot save serialization and reload defects using a copy of a save. Verify inventory persistence across restart. Does not modify real player saves without authorization."},
+    {"id":"csv_chart","name":"CSV charts","description":"Create a standalone chart from tabular CSV measurements, with labelled axes and an exportable figure. Does not review source code or repair databases."},
+    {"id":"release_notes","name":"Release notes","description":"Draft user-facing release notes from supplied verified changes and test evidence. Clearly label limitations. Does not implement features or claim tests were run without evidence."}
+  ],
+  "cases": [
+    {"id":"review_en","goal":"Inspect this patch for a race condition and report defects without changing files.","expected":["patch_review"]},
+    {"id":"save_zh","goal":"Godot 里背包关闭游戏再打开就清空了，请用复制的测试存档修好并验证重载。","expected":["save_recovery"]},
+    {"id":"chart_en","goal":"Turn the attached CSV frame-time measurements into a labelled plot I can export.","expected":["csv_chart"]},
+    {"id":"notes_zh","goal":"根据这些已验证改动和测试记录，写给玩家看的版本更新说明，写清尚未验证的部分。","expected":["release_notes"]},
+    {"id":"arithmetic","goal":"What is 17 multiplied by 23?","expected":[null]},
+    {"id":"vocabulary_trap","goal":"Translate only the phrase 'patch review and CSV charts' into Chinese. Do not inspect code or create a chart.","expected":[null]},
+    {"id":"missing_capability","goal":"Compose and export an original ambient audio track for a game menu.","expected":[null]},
+    {"id":"multi_goal","goal":"First inspect this diff for regressions; later draft release notes from the verified changes. Recommend the skill for the first step only.","expected":["patch_review"]}
+  ]
+}

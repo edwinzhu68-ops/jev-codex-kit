@@ -21,3 +21,8 @@
 The portable CLI, settings, MCP integration, evidence adapter, tests and documentation are distributed under MIT. See root LICENSE. Dependencies retain their own licenses; exact versions and integrity hashes are recorded in package-lock.json. No JevLoop, Foreman, user credentials, real project source or private receipts are distributed.
 
 Official API reference: https://docs.typesafe.ai/api
+
+## Skill routing design references
+
+- https://github.com/lomeshdutta/skill-router at `4c538d8be575d5dee09a220c3304bd311ed97903` (MIT, Lomesh Dutta): reviewed for goal-based skill discovery and explicit no-match behavior. Its Python implementation, prompts, Claude hooks and built-in skill roster are not copied or bundled. Our cross-client candidate router/catalog are independently written; this is not an upstream port or endorsement.
+- https://docs.typesafe.ai/cookbooks/skill_suggestion : reviewed for candidate relevance checking and progressive disclosure. Published cookbook accuracy results do not describe this kit. Our bounded single-request implementation differs from its large-roster two-stage workflow.

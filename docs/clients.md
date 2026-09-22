@@ -27,7 +27,7 @@ Reload the selected client's tools or start a fresh task; trust/enable the serve
 
 > 使用 jev-codex-kit 技能。先确认有哪些工具；针对本任务按需定位源码、整理证据和核对结论。你负责编辑和实际测试，不要每条消息都调用 Jev。
 
-Pi provides `/jev-status`: it starts the local MCP connection and lists tools without calling a model. Other clients can inspect their MCP tool list (11 tools). This proves connectivity only. For a reproducible no-key evidence call, edit `examples/evidence.json` to point at an authorized non-sensitive file; keep sources pinned and omit labels/checks. Then run:
+Pi provides `/jev-status`: it starts the local MCP connection and lists tools without calling a model. Other clients can inspect their MCP tool list (12 tools in v0.3). This proves connectivity only. For a reproducible no-key evidence call, edit `examples/evidence.json` to point at an authorized non-sensitive file; keep sources pinned and omit labels/checks. Then run:
 
 ```sh
 node bin/jev-kit.mjs call jev_prepare_evidence examples/evidence.json new-result.json

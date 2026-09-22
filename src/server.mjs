@@ -4,11 +4,11 @@ import { toolCatalog, executeTool } from './tools.mjs';
 
 export async function serve() {
   const catalog = await toolCatalog();
-  const server = new McpServer({ name: 'jev-codex-kit', version: '0.2.0' });
+  const server = new McpServer({ name: 'jev-codex-kit', version: '0.3.0' });
   for (const [name, tool] of catalog) server.registerTool(name, {
     description: tool.description,
     inputSchema: tool.schema,
-    annotations: { readOnlyHint: !['jev_code_brief', 'jev_prepare_evidence'].includes(name), destructiveHint: false, idempotentHint: false, openWorldHint: true }
+    annotations: { readOnlyHint: !['jev_code_brief', 'jev_prepare_evidence', 'jev_route_skills'].includes(name), destructiveHint: false, idempotentHint: false, openWorldHint: true }
   }, async (args, extra) => {
     try {
       const result = await executeTool(catalog, name, args, extra.signal);

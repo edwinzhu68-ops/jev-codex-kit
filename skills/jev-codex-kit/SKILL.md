@@ -1,6 +1,6 @@
 ---
 name: jev-codex-kit
-description: Locate relevant source within an authorized directory, prepare source-linked evidence bundles, and call typed Jev review/ranking/verification tools from the jev-kit MCP server. Jev judges; the host edits and tests.
+description: Locate relevant source, prepare source-linked evidence, suggest an applicable skill from explicit candidates, and review or verify supplied changes using the jev-kit MCP server. Jev judges; the host edits and tests.
 ---
 
 # Jev Coding Kit
@@ -11,6 +11,7 @@ Select one route based on the task. Exact search, math and predetermined reads u
 
 - Semantic source location: `jev_code_brief`, with a configured `root` and explicit non-sensitive relative subdirectory `path`. The scanner only searches that scope. Returned candidates are partial coverage, not proof that all relevant code was found.
 - Explicit source/log collection and checks: `jev_prepare_evidence`. Bind required sources to checks or mark them `pinned`; fixed collection uses no model.
+- Skill selection when the task goal is clear but the appropriate skill is not: `jev_route_skills`. Supply at most 19 host-confirmed candidates with complete names/descriptions. Use actual active skill metadata; filesystem discovery alone does not establish that the client enabled a skill. Preserve explicit requirements through `required_ids` (zero inference). Never ask Jev to override mandatory skills or instruction priority. `SUGGESTED` is a pointer to inspect, `NO_MATCH` covers only these candidates, and `REVIEW_REQUIRED` is an abstention. No every-message routing or automatic installation. See `docs/skill-routing.md` for offline catalog and CLI usage.
 - Other semantic judgments: `jev_rank`, `jev_verify`, `jev_review`, `jev_gate`, `jev_screen`, or prepared-call routing via `jev_step`. Use `jev_evaluate` only when no recipe fits. Use `jev_coding_loop` or `jev_tool_route` only if the fused step does not fit.
 
 The server is named `jev-kit`; server names are not tool names. Check actual registry availability. If absent, use the same operation through the CLI:

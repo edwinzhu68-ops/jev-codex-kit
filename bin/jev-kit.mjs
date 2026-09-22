@@ -12,15 +12,18 @@ const entry = fileURLToPath(import.meta.url);
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const argv = process.argv.slice(2);
 const command = argv.shift() || 'help';
-const help = `Jev Coding Kit 0.2.0 (repository/package: jev-codex-kit)
+const help = `Jev Coding Kit 0.3.0 (repository/package: jev-codex-kit)
   setup --root PATH [--client CLIENT,...] [--no-key-prompt]
                                              Authorize project and install selected clients
   Clients: codex, claude, cursor, opencode, pi, vscode, none
   --codex                                    Compatibility alias for --client codex
   doctor                                      Local checks only; no paid request
-  serve                                       Start stdio MCP with all 11 tools
+  serve                                       Start stdio MCP with all 12 tools
   call TOOL INPUT.json NEW_OUTPUT.json         Invoke one tool; refuse existing output
   config [--client CLIENT]                     Export client-specific configuration (no key)
+  skills catalog DIRECTORY NEW_CATALOG.json   Inspect direct skill folders offline
+  skills suggest CATALOG.json GOAL NEW.json [--ids ID,ID]
+                                             Route a bounded, fresh skill catalog
   help
 Use your own TypeSafe API key. Keep this installation folder after registering.
 `;
@@ -80,6 +83,39 @@ async function registerCodex() {
 }
 async function main() {
   if (['help','--help','-h'].includes(command)) { console.log(help); return; }
+  if (command === 'skills') {
+    const [action, ...args] = argv;
+    const { collectSkillCatalog, catalogInput } = await import('../src/skill-catalog.mjs');
+    if (action === 'catalog' && args.length === 2) {
+      const catalog = await collectSkillCatalog(args[0]);
+      await writeFile(args[1], JSON.stringify(catalog, null, 2), { flag: 'wx', mode: 0o600 });
+      console.log(JSON.stringify({ output: path.resolve(args[1]), candidates: catalog.candidates.length, excluded: catalog.excluded.length, network_requests: 0 }));
+      return;
+    }
+    if (action !== 'suggest' || ![3,5].includes(args.length) || (args.length === 5 && args[3] !== '--ids')) throw Error('Use skills catalog DIRECTORY NEW.json or skills suggest CATALOG.json GOAL NEW.json [--ids ID,ID]');
+    const [file, goal, output] = args;
+    const ids = args.length === 5 ? args[4].split(',') : undefined;
+    const { input, catalog_coverage } = await catalogInput(file, goal, ids);
+    await writeFile(output, JSON.stringify({ status: 'STARTING' }), { flag: 'wx', mode: 0o600 });
+    try {
+      await configureRuntime();
+      const { routeSkills } = await import('../src/skill-router.mjs');
+      const result = await routeSkills(input, { signal: AbortSignal.timeout(35000) });
+      try { await catalogInput(file, goal, ids); }
+      catch { result.status = 'STALE_CATALOG'; result.recommendation = null; result.required = []; }
+      result.catalog_coverage = catalog_coverage;
+      result.source_validation = result.status === 'STALE_CATALOG' ? 'stale' : 'fresh_at_readback';
+      const receipt = JSON.parse(await readFile(result.receipt_path, 'utf8'));
+      receipt.result = result;
+      await writeFile(result.receipt_path, JSON.stringify(receipt, null, 2));
+      await writeFile(output, JSON.stringify(result, null, 2));
+      console.log(JSON.stringify({ output: path.resolve(output), status: result.status }));
+    } catch {
+      await writeFile(output, JSON.stringify({ status: 'ERROR', message: 'No skill decision. Check input, catalog freshness, limits, credential and service.' }));
+      throw Error('Skill routing failed; no valid recommendation.');
+    }
+    return;
+  }
   if (command === 'config') {
     if(argv.length && (argv.length!==2||argv[0]!=='--client'))throw Error('config [--client CLIENT]');
     const client=option('--client')||'generic',config=clientConfig(client);

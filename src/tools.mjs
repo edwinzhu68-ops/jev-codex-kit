@@ -2,6 +2,7 @@ import { inputSchema, prepareEvidence } from './evidence-workflow.mjs';
 import { briefSchema, prepareBrief } from './pijev-bridge.mjs';
 import { readSettings, runsHome, MODEL } from './settings.mjs';
 import path from 'node:path';
+import { skillRouteSchema, routeSkills } from './skill-router.mjs';
 
 const recipes = [
   ['evaluate','Evaluate','evaluate'], ['coding_loop','CodingLoop','coding-loop'],
@@ -22,6 +23,11 @@ const descriptions = {
 };
 export async function toolCatalog() {
   const map = new Map();
+  map.set('jev_route_skills', {
+    schema: skillRouteSchema,
+    description: 'Suggest one host-confirmed skill for a task from at most 19 complete candidate descriptions. Preserve required skills without inference, allow no-match and uncertainty. Does not install, load, execute or scan skills. Not a per-message hook.',
+    run: (args, context) => routeSkills(args, { signal: context.signal })
+  });
   for (const [name, title, module] of recipes) {
     const mod = await import(`../vendor/jev-mcp/dist/tools/${module}.js`);
     const schemaName = name.replace(/_([a-z])/g, (_, c) => c.toUpperCase()) + 'InputSchema';

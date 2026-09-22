@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-09-22T15:22:40.956Z",
+  "mode": "live_jev_vs_lexical",
+  "model": "jev-1.13.0",
+  "dataset_sha256": "1ff61130ca86b5e9ef218b99ffd28eb3d59ff0ab5fb1e2cb0e31b2196e005fcc",
+  "dataset_description": "Small author-written synthetic diagnostic set, frozen before first live evaluation. Not a population sample or a coding-host benchmark.",
+  "limitations": [
+    "Author-written synthetic examples; not independent or statistically representative.",
+    "Lexical overlap is a weak deterministic baseline, not Codex or another LLM.",
+    "No paid generation baseline, host token saving or end-to-end coding speed measured.",
+    "No provider fees inferred from tokens; review/unknown is an abstention, not correct no-match.",
+    "Descriptions and goals are sent; expected labels never go into the inference request."
+  ],
+  "rows": [
+    {
+      "id": "review_en",
+      "goal": "Inspect this patch for a race condition and report defects without changing files.",
+      "expected": [
+        "patch_review"
+      ],
+      "lexical": {
+        "selected": "patch_review",
+        "correct": true,
+        "elapsed_ms": 13.828900000000004
+      },
+      "jev": {
+        "status": "SUGGESTED",
+        "selected": "patch_review",
+        "correct": true,
+        "elapsed_ms": 583,
+        "usage": {
+          "input_tokens": 1058,
+          "output_tokens": 130
+        },
+        "input_sha256": "1b3606656f1b7d90f9426dc135cd08d9812d63ee0a1020a976bc89164db460d6",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.96,
+            "probability": 1
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.05,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.03,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.04,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": "patch_review",
+          "confidence": 1,
+          "none_probability": 0
+        }
+      }
+    },
+    {
+      "id": "save_zh",
+      "goal": "Godot 里背包关闭游戏再打开就清空了，请用复制的测试存档修好并验证重载。",
+      "expected": [
+        "save_recovery"
+      ],
+      "lexical": {
+        "selected": "save_recovery",
+        "correct": true,
+        "elapsed_ms": 0.5318999999999505
+      },
+      "jev": {
+        "status": "SUGGESTED",
+        "selected": "save_recovery",
+        "correct": true,
+        "elapsed_ms": 259,
+        "usage": {
+          "input_tokens": 1079,
+          "output_tokens": 130
+        },
+        "input_sha256": "10085233f2d058c017367ba597469cb1f3f5c5a178344ef18f0f3c2efa255e03",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.27,
+            "probability": 0
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.97,
+            "probability": 1
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.03,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.08,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": "save_recovery",
+          "confidence": 1,
+          "none_probability": 0
+        }
+      }
+    },
+    {
+      "id": "chart_en",
+      "goal": "Turn the attached CSV frame-time measurements into a labelled plot I can export.",
+      "expected": [
+        "csv_chart"
+      ],
+      "lexical": {
+        "selected": "csv_chart",
+        "correct": true,
+        "elapsed_ms": 0.1311000000000604
+      },
+      "jev": {
+        "status": "SUGGESTED",
+        "selected": "csv_chart",
+        "correct": true,
+        "elapsed_ms": 220,
+        "usage": {
+          "input_tokens": 1059,
+          "output_tokens": 130
+        },
+        "input_sha256": "e29999127ca425da27b162563187da07e5a3bdf044ee4d0afa8590239942dc98",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.02,
+            "probability": 0
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.02,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.96,
+            "probability": 1
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.03,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": "csv_chart",
+          "confidence": 1,
+          "none_probability": 0
+        }
+      }
+    },
+    {
+      "id": "notes_zh",
+      "goal": "根据这些已验证改动和测试记录，写给玩家看的版本更新说明，写清尚未验证的部分。",
+      "expected": [
+        "release_notes"
+      ],
+      "lexical": {
+        "selected": null,
+        "correct": false,
+        "elapsed_ms": 0.08230000000003201
+      },
+      "jev": {
+        "status": "SUGGESTED",
+        "selected": "release_notes",
+        "correct": true,
+        "elapsed_ms": 181,
+        "usage": {
+          "input_tokens": 1082,
+          "output_tokens": 130
+        },
+        "input_sha256": "b07399b7cd01c4d04391b6fd229e68be9abb1593c2bebbc5e8bbe40eac00e855",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.14,
+            "probability": 0
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.08,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.05,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.97,
+            "probability": 1
+          }
+        ],
+        "selection": {
+          "choice": "release_notes",
+          "confidence": 1,
+          "none_probability": 0
+        }
+      }
+    },
+    {
+      "id": "arithmetic",
+      "goal": "What is 17 multiplied by 23?",
+      "expected": [
+        null
+      ],
+      "lexical": {
+        "selected": null,
+        "correct": true,
+        "elapsed_ms": 0.054300000000012005
+      },
+      "jev": {
+        "status": "NO_MATCH",
+        "selected": null,
+        "correct": true,
+        "elapsed_ms": 196,
+        "usage": {
+          "input_tokens": 1055,
+          "output_tokens": 129
+        },
+        "input_sha256": "f1d97ebcc98b2e2a364473c1b171e36d74374dfaf528bec73668a713f06ca64f",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.02,
+            "probability": 0
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.01,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.02,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.01,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": null,
+          "confidence": 1,
+          "none_probability": 1
+        }
+      }
+    },
+    {
+      "id": "vocabulary_trap",
+      "goal": "Translate only the phrase 'patch review and CSV charts' into Chinese. Do not inspect code or create a chart.",
+      "expected": [
+        null
+      ],
+      "lexical": {
+        "selected": "csv_chart",
+        "correct": false,
+        "elapsed_ms": 0.06140000000004875
+      },
+      "jev": {
+        "status": "NO_MATCH",
+        "selected": null,
+        "correct": true,
+        "elapsed_ms": 365,
+        "usage": {
+          "input_tokens": 1067,
+          "output_tokens": 129
+        },
+        "input_sha256": "d242a4bc75a95f68b8d24ada0d810ce3a699c7aa5856bcb68a5b04332c718e90",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.05,
+            "probability": 0.02
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.02,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.04,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.03,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": null,
+          "confidence": 0.97,
+          "none_probability": 0.98
+        }
+      }
+    },
+    {
+      "id": "missing_capability",
+      "goal": "Compose and export an original ambient audio track for a game menu.",
+      "expected": [
+        null
+      ],
+      "lexical": {
+        "selected": null,
+        "correct": true,
+        "elapsed_ms": 0.12970000000018445
+      },
+      "jev": {
+        "status": "NO_MATCH",
+        "selected": null,
+        "correct": true,
+        "elapsed_ms": 212,
+        "usage": {
+          "input_tokens": 1057,
+          "output_tokens": 129
+        },
+        "input_sha256": "72038e21e376b569b011c4b430fac0a8123c3bcc0f1bb211c4208f9f70d211fa",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.03,
+            "probability": 0
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.02,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.03,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.03,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": null,
+          "confidence": 1,
+          "none_probability": 1
+        }
+      }
+    },
+    {
+      "id": "multi_goal",
+      "goal": "First inspect this diff for regressions; later draft release notes from the verified changes. Recommend the skill for the first step only.",
+      "expected": [
+        "patch_review"
+      ],
+      "lexical": {
+        "selected": "patch_review",
+        "correct": true,
+        "elapsed_ms": 0.08690000000024156
+      },
+      "jev": {
+        "status": "SUGGESTED",
+        "selected": "patch_review",
+        "correct": true,
+        "elapsed_ms": 200,
+        "usage": {
+          "input_tokens": 1071,
+          "output_tokens": 130
+        },
+        "input_sha256": "8316f0ef91f2b9ba74968d8861868de3dd0190b0c10711c64c81b96954be1771",
+        "scores": [
+          {
+            "id": "patch_review",
+            "name": "Patch review",
+            "fit": 0.97,
+            "probability": 1
+          },
+          {
+            "id": "save_recovery",
+            "name": "Godot save recovery",
+            "fit": 0.05,
+            "probability": 0
+          },
+          {
+            "id": "csv_chart",
+            "name": "CSV charts",
+            "fit": 0.03,
+            "probability": 0
+          },
+          {
+            "id": "release_notes",
+            "name": "Release notes",
+            "fit": 0.27,
+            "probability": 0
+          }
+        ],
+        "selection": {
+          "choice": "patch_review",
+          "confidence": 1,
+          "none_probability": 0
+        }
+      }
+    }
+  ],
+  "complete": true,
+  "summary": {
+    "cases": 8,
+    "lexical_correct": 6,
+    "jev_evaluated": 8,
+    "jev_correct": 8,
+    "jev_abstentions": 0,
+    "input_tokens": 8528,
+    "output_tokens": 1037,
+    "jev_elapsed_ms": 2216
+  }
+}

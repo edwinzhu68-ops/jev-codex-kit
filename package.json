@@ -1,6 +1,6 @@
 {
   "name": "jev-codex-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Jev tools for Codex, Claude Code, Cursor, OpenCode, Pi and other coding clients",
   "type": "module",
   "license": "MIT",
@@ -17,6 +17,8 @@
     "extensions",
     "docs",
     "scripts/build.mjs",
+    "scripts/eval-skills.mjs",
+    "evals",
     "skills",
     "examples",
     "README.md",
@@ -34,6 +36,7 @@
     "doctor": "node bin/jev-kit.mjs doctor",
     "start": "node bin/jev-kit.mjs serve",
     "test": "node --test test/*.test.mjs",
+    "eval:skills": "node scripts/eval-skills.mjs",
     "prepack": "npm run build"
   },
   "dependencies": {
@@ -42,6 +45,7 @@
     "jsonc-parser": "3.3.1",
     "minimatch": "10.2.6",
     "typescript": "5.9.3",
+    "yaml": "2.9.1",
     "zod": "4.6.5"
   }
 }

@@ -39,12 +39,15 @@
 
 ## 在会话中使用
 
+新增：`jev_route_skills` 可从明确的候选描述中推荐技能，保留必用技能和无匹配出口，不接管会话。也有离线技能目录命令。见 [技能选择用法](docs/skill-routing.md) 和 [8 个固定任务的首轮实测](docs/evaluations/skill-routing-20260922.md)：本轮 Jev 8/8、简单关键词基线 6/8；这不是 Codex 编程速度或额度节省证明。
+
 正常交代任务即可。首次可以告诉 Codex：
 
 > 使用已安装的 jev-codex-kit 技能，按任务需要定位源码、整理证据或核对结论；你负责修改与真实测试。不要每步调用，不要重复判断。
 
 | 需要做什么 | 工具 |
 | --- | --- |
+| 按明确任务在候选技能中选择 | `jev_route_skills` |
 | 在授权子目录中寻找相关源码 | `jev_code_brief` |
 | 收集明确文件/日志、核对证据 | `jev_prepare_evidence` |
 | 排序 / 验证声明 / 审查改动 | `jev_rank` / `jev_verify` / `jev_review` |

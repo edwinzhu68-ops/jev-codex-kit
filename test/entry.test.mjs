@@ -31,6 +31,25 @@ test('setup preserves configured roots; doctor is offline and reports missing ke
   const config = JSON.parse(f.run('config').stdout); assert.deepEqual(config.mcpServers['jev-kit'].args, [entry, 'serve']);
   assert.ok(!JSON.stringify(config).includes('API_KEY'));
 });
+
+test('skills CLI exports offline metadata, preserves outputs and rejects stale catalog before inference', async () => {
+  const f = await fixture(), directory = path.join(f.root, 'skills'), skill = path.join(directory, 'manual', 'SKILL.md');
+  await mkdir(path.dirname(skill), {recursive:true});
+  await writeFile(skill, '---\nname: manual\ndescription: Follow explicit user instructions\ndisable-model-invocation: true\n---\nDo not export this body.');
+  const catalog = path.join(f.temp, 'catalog.json'), resultFile = path.join(f.temp, 'result.json');
+  assert.equal(f.run('skills','catalog',directory,catalog).status,0);
+  assert.ok(!(await readFile(catalog,'utf8')).includes('Do not export this body'));
+  assert.equal(f.run('skills','catalog',directory,catalog).status,1);
+  assert.equal(f.run('skills','suggest',catalog,'An ordinary request',resultFile).status,0);
+  const result = JSON.parse(await readFile(resultFile,'utf8'));
+  assert.equal(result.status,'EMPTY_CATALOG'); assert.equal(result.metrics.workflow_inference_calls,0);
+  assert.equal(result.source_validation,'fresh_at_readback');
+  assert.equal(f.run('skills','suggest',catalog,'An ordinary request',resultFile).status,1);
+  await writeFile(skill,'---\nname: manual\ndescription: Changed\n---\n');
+  const stale = path.join(f.temp,'stale.json');
+  assert.equal(f.run('skills','suggest',catalog,'New request',stale).status,1);
+  await assert.rejects(readFile(stale),{code:'ENOENT'});
+});
 test('CLI produces actual source evidence without key; refuses output overwrite and unauthorized roots', async () => {
   const f = await fixture(); assert.equal(f.run('setup','--root',f.root,'--no-key-prompt').status,0);
   const input = path.join(f.temp,'input.json'), output = path.join(f.temp,'output.json');
@@ -45,14 +64,17 @@ test('CLI produces actual source evidence without key; refuses output overwrite 
   const denied = path.join(f.temp,'denied.json'); assert.equal(f.run('call','jev_prepare_evidence',input,denied).status,1);
   assert.equal(JSON.parse(await readFile(denied,'utf8')).status,'ERROR');
 });
-test('actual stdio exposes 11 tools and returns deterministic evidence with no provider', async () => {
+test('actual stdio exposes 12 tools and returns deterministic evidence and required skills with no provider', async () => {
   const f = await fixture(); assert.equal(f.run('setup','--root',f.root,'--no-key-prompt').status,0);
   const transport = new StdioClientTransport({command:process.execPath,args:[entry,'serve'],env:f.env,stderr:'pipe'});
   let stderr=''; transport.stderr?.on('data',c=>stderr+=c.toString());
   const client = new Client({name:'kit-test',version:'1'});
   try {
-    await client.connect(transport); const tools = await client.listTools(); assert.equal(tools.tools.length,11);
+    await client.connect(transport); const tools = await client.listTools(); assert.equal(tools.tools.length,12);
     assert.ok(tools.tools.some(t=>t.name==='jev_code_brief'));
+    const routed = await client.callTool({name:'jev_route_skills',arguments:{goal:'User requires review',candidates:[{id:'review',name:'Review',description:'Review code changes'}],required_ids:['review']}});
+    assert.equal(routed.structuredContent.status,'REQUIRED_SKILLS');
+    assert.equal(routed.structuredContent.metrics.workflow_inference_calls,0);
     const result = await client.callTool({name:'jev_prepare_evidence',arguments:{task:'Collect proof',root:f.root,sources:[{id:'proof',path:'proof.txt',pinned:true}]}});
     assert.equal(result.structuredContent.status,'EVIDENCE_READY');
     const rejected = await client.callTool({name:'jev_evaluate',arguments:{model:'other-model',state:'x',questions:{a:{type:'noul',instructions:'Does x exist?'}}}});
@@ -61,7 +83,7 @@ test('actual stdio exposes 11 tools and returns deterministic evidence with no p
   assert.equal(stderr,'');
 });
 test('all recipe schemas and runners exist; envelope rejects oversized calls/model overrides', async () => {
-  const catalog = await toolCatalog(); assert.equal(catalog.size,11);
+  const catalog = await toolCatalog(); assert.equal(catalog.size,12);
   for(const t of catalog.values()){assert.equal(typeof t.schema.parse,'function');assert.equal(typeof t.run,'function');}
   await assert.rejects(executeTool(catalog,'jev_evaluate',{state:'x'.repeat(24001),questions:{}}),/INPUT_CHARACTER_LIMIT/);
   await assert.rejects(executeTool(catalog,'jev_evaluate',{state:'x',questions:{},model:'other'}),/MODEL_OVERRIDE/);
