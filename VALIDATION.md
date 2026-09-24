@@ -17,6 +17,12 @@ trusted but inactive**. The user's working conversation must not be re-enabled
 or restarted as a diagnostic. No hook or trust files were changed in this audit.
 
 The original failure's precise stage, error and duration remain unobserved.
+An earlier probe in this existing conversation used the host-provided
+`functions.exec` surface and found no gate event. That was an invalid test of
+whether the session loaded native hooks: hosted/unhooked tool paths are outside
+the documented `PreToolUse` coverage. The prior inference that the old session
+had not loaded the gate is withdrawn. No conclusion about old-session hook
+loading follows from that probe.
 Possible submit-hook latency, client hook loading and UI transport errors must
 be distinguished by timestamped native hook/client evidence before attributing
 cause. Keep the recovery state intact; a future fix needs an isolated Desktop
