@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { prepareAuto, installAuto, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
+import { prepareAuto, installAuto, installWorkGate, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
 import { runAutoHook, eligiblePrompt, withinRoot } from '../src/auto-hook.mjs';
 
 async function fixture(mode = 'skills') {
@@ -37,8 +37,22 @@ test('workflow reminder is local on each eligible work prompt and never calls Je
   assert.equal(last.status, 'WORKFLOW_REMINDER');
   assert.equal(last.metrics.workflow_inference_calls, 0);
   assert.equal(JSON.parse(await readFile(path.join(path.dirname(f.installed.config_file), 'sessions', last.session + '.json'))).count, 0);
-  assert.equal(await runAutoHook({ ...f.event, prompt: '继续' }, f.installed.config_file, deps), null);
+  for (const prompt of ['继续', 'x'.repeat(5000), 'Review\n```js\ncode\n```']) assert(await runAutoHook({ ...f.event, prompt }, f.installed.config_file, deps));
   assert(await runAutoHook({ ...f.event, session_id: 'another-task' }, f.installed.config_file, deps));
+});
+
+test('work gate installation preserves trusted definitions and registers separate native review entries', async () => {
+  const f = await fixture();
+  const options = { home: path.dirname(path.dirname(f.installed.config_file)), codexHome: path.dirname(f.installed.hook_file) };
+  const before = JSON.parse(await readFile(f.installed.hook_file));
+  const result = await installWorkGate(options);
+  assert.equal(result.status, 'INSTALLED_AWAITING_NATIVE_TRUST');
+  const after = JSON.parse(await readFile(f.installed.hook_file));
+  assert.deepEqual(after.hooks.UserPromptSubmit[0], before.hooks.UserPromptSubmit[0]);
+  assert.deepEqual(after.hooks.Stop, before.hooks.Stop);
+  assert.equal(after.hooks.PreToolUse[0].matcher, '.*');
+  assert(!JSON.stringify(after).includes('trusted_hash'));
+  assert.equal((await installWorkGate(options)).status, 'REGISTERED_TRUST_NOT_VERIFIED');
 });
 
 test('mode changes preserve prior decisions and refresh preserves the selected mode', async () => {

@@ -5,6 +5,16 @@ description: Prepare source-linked work packets for main-host execution or subag
 
 # Jev Coding Kit
 
+When task-first preparation is required by the user's policy, every substantive
+work package needs an actual task-content judgment before execution or delegation;
+perceived simplicity is not an exemption. Gather minimal originals first, then
+request task-specific grouping or relationship checks. Zero-inference collection
+is not sufficient. Review the actual result and preserve uncertainty. The optional
+Codex execution gate uses `bin/jev-work.mjs` and separate native hooks; see
+`docs/execution-gate.md`. Never change native trust or claim existing-session
+coverage without observed evidence. Different follow-up assignments need new task
+IDs; same-task unchanged judgments may be handed to its executor without rerolling.
+
 For Codex, Claude Code, Cursor, OpenCode, Pi and other coding hosts. The repository/package and skill identifier remain `jev-codex-kit` for compatibility. Pi uses a native extension; other clients use stdio MCP. Hosts may prefix MCP tool names with the server name. Pi provides `/jev-status` to check its MCP bridge without a model request.
 
 Select one route based on the task. Exact search, math and predetermined reads use local tools.

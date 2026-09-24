@@ -1,5 +1,10 @@
 # Automatic, quiet Codex entry
 
+**The legacy workflow mode below only reminds the host.** For a task-bound
+execution check, see [execution gate](execution-gate.md). The new gate registers
+separate UserPromptSubmit/PreToolUse definitions that require native review.
+Neither installation nor these unit tests prove an existing session adopted it.
+
 The current reminder covers preparation before both main-host execution and
 subagent delegation. Use [work preparation](work-preparation.md) for unresolved
 batch grouping/checks, then pass the same evidence packet to the executor without

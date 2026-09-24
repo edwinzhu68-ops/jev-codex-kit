@@ -1,8 +1,17 @@
 # Jev Coding Kit
 
+Main now includes an opt-in [task execution gate](docs/execution-gate.md): actual
+task judgments, explicit host disposition, fresh evidence and exact action
+bindings before covered execution/delegation. Install with `node bin/jev-kit.mjs
+auto install-work-gate`, then review the two new native hooks in Codex `/hooks`.
+The current local installation is registered but UNTRUSTED. Unprompted real-model
+new/existing-session behavior has NOT passed acceptance. 94 local tests and two
+live provider integration calls do not substitute for it. See [validation](VALIDATION.md).
+No new Release has been published.
+
 New: [quiet automatic Codex entry](docs/automatic-codex.md) and a [CUA/browser integration map](docs/integration-map.md). A real browser run completed two clicks inside one host call. Native desktop execution requires a supported runtime and remains separately unverified.
 
-The current `main` branch emits a zero-Jev-call pre-work reminder for every eligible substantive prompt in `workflow` mode; short continuations still require the host's task instructions. Paid skill routing remains optional. In the 0.4.2 [workload diagnostic](docs/evaluations/workload-benefit-20260922.md), eight Chinese reports were classified in about 0.69 seconds with 8/8 expected labels, while source-claim verification had errors and extensive review overhead. Evidence text removes repeated metadata without cutting retained originals. These results do not establish whole-task coding speedups.
+The legacy `workflow` mode emits a zero-Jev-call reminder and now also covers long/code/continuation prompts. It is not the execution gate. Paid skill routing retains its conservative filters. In the 0.4.2 [workload diagnostic](docs/evaluations/workload-benefit-20260922.md), eight Chinese reports were classified in about 0.69 seconds with 8/8 expected labels, while source-claim verification had errors and extensive review overhead. These results do not establish whole-task coding speedups.
 
 One portable CLI and stdio MCP server for nine Jev judgment tools plus scoped source discovery, evidence preparation, shared work preparation and task-based skill suggestions (13 tools on main). Community integration, not an official TypeSafe or OpenAI product. Jev judges; your coding host edits, executes and verifies. No universal speedup or cost savings claimed.
 

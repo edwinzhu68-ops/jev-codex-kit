@@ -52,10 +52,13 @@ export function workflowContext() {
 export async function runAutoHook(event, configFile, {
   route = routeSkills, configure = configureRuntime, now = () => new Date(),
 } = {}) {
-  if (event.hook_event_name !== 'UserPromptSubmit' || !eligiblePrompt(event.prompt) || typeof event.session_id !== 'string' || !event.session_id || typeof event.cwd !== 'string') return null;
+  if (event.hook_event_name !== 'UserPromptSubmit' || typeof event.prompt !== 'string' || !event.prompt.trim() || typeof event.session_id !== 'string' || !event.session_id || typeof event.cwd !== 'string') return null;
   const home = path.dirname(configFile);
   const config = JSON.parse(await readFile(configFile, 'utf8'));
   if (config.enabled === false) return null;
+  // Local workflow notices do not upload text. The legacy paid skill router's
+  // conservative filter must not erase long/code/continuation work boundaries.
+  if ((config.mode ?? 'skills') === 'skills' && !eligiblePrompt(event.prompt)) return null;
   if (!Array.isArray(config.roots) || config.roots.some(r => typeof r !== 'string' || !path.isAbsolute(r))) return null;
   // macOS /var aliases and Windows short paths must resolve to the same scope;
   // conversely a junction inside an allowed root must not authorize its outside target.

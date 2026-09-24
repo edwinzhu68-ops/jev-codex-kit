@@ -1,5 +1,51 @@
 # Validation record
 
+## Task execution gate candidate — 2026-09-23
+
+**PARTIAL / native behavioral acceptance BLOCKED, not complete.** Source implements
+task checks, but no unprompted real-model cross-session task has been accepted.
+
+- Local Windows suite: **94/94 PASS**. Includes receipt-less execution denial,
+  required host review, exact one-shot call binding, distinct spawn/follow-up tasks,
+  same-file independent receipts, long/code/continue boundaries, source/receipt
+  changes, zero-inference rejection, failure/no-reroll and explicit degradation.
+  Installer preserves old definitions, unrelated hooks and backups and never
+  writes native trust. These are unit/integration tests, not autonomous behavior.
+- New CLI hook entrypoint subprocess smoke: PASS (receipt-less apply_patch denied,
+  no execution dispatched). This was a direct handler process, not native hook
+  execution. Packaging dry-run/build checked separately; no release uploaded.
+- Direct handler + **real Jev** integration: two ordinary synthetic task strings,
+  neither mentioning Jev, over the same two public example sources. Each made one
+  call with three questions to `jev-1.13.0`; inference times 679.47/257.85 ms;
+  tokens 1257/126 and 1255/126 (input/output). The handler denied the unprepared
+  action, then accepted its exact binding after host review. All uncertain/adverse
+  results were retained for inspection. Calls were driven by a test harness;
+  apply_patch/followup_task were NOT dispatched. This does not prove an independent
+  model follows the workflow.
+- Real Codex CLI/app-server **0.153.4**, `hooks/list` after local registration:
+  old UserPromptSubmit **trusted**; new task UserPromptSubmit **untrusted**;
+  new PreToolUse **untrusted**. No hooks.state/config trust edits, bypass flags,
+  client restart or game changes. Registration references the working checkout;
+  it does not establish the version loaded by any existing Desktop session.
+- BLOCKED: native execution of new hooks and all real-model behavioral acceptance
+  cases until exact definitions receive native review. This includes fresh tasks,
+  an existing session's next task, long/code prompts, continuation to the next
+  package, two distinct assignments, follow-up to an existing agent and main-host
+  self-execution. Old-session loading, child-session packet handoff and specialized
+  tool aliases remain unverified. Hosted tools/write_stdin exceptions remain.
+- Large source inputs reject at complete-input limits; host-managed batches are
+  documented, but automatic complete-boundary batching and aggregate multi-batch
+  execution capabilities are NOT implemented. Semantic task boundaries inside a
+  turn and exception eligibility remain host responsibilities. Exact action binding
+  is a guardrail, not proof of the host's private thought order or task semantics.
+- Private local evidence: `W:/Codex/temp/jev-task-gate-20260923/` (suite, live report,
+  hooks-before/after, rule backups), with original provider receipts under the
+  local kit's `runs/work/` and lifecycle traces under `auto/work/`. No credentials
+  or user transcripts are committed. Source main update is not a new Release.
+
+See [gate contract and activation](docs/execution-gate.md). Historical results below
+describe earlier versions and do not override this current acceptance limit.
+
 ## Unreleased task-specific work preparation — 2026-09-22
 
 - `jev_prepare_work` now prepares a packet for main-host execution or one subagent assignment. Different tasks require distinct caller-assigned task IDs and independent preparation, including when sources overlap. There is no cross-task cache or global ID registry; every invocation creates a fresh run.

@@ -38,6 +38,10 @@ export async function prepareWork(raw, options = {}) {
     format: 'jev-work-packet-v1',
     status: bundle.status === 'EVIDENCE_READY' ? 'WORK_PREPARED' : bundle.status,
     preparation_status: bundle.status,
+    judgment_state: bundle.metrics.workflow_inference_calls === 0 ? 'COLLECTED'
+      : bundle.status === 'STALE_SOURCE' ? 'STALE_SOURCE'
+      : bundle.status === 'REVIEW_REQUIRED' ? 'REVIEW_REQUIRED' : 'JEV_JUDGED',
+    model: bundle.metrics.workflow_inference_calls ? 'jev-1.13.0' : null,
     host_review_required: true,
     task: input.task, ...workContext, groups, unassigned, review_items: reviewItems,
     packet_path: path.join(path.dirname(bundle.receipt_path), 'work-packet.json'),

@@ -9,6 +9,33 @@ import { kitHome } from './settings.mjs';
 import { hashText, skillCandidateSchema, assertNoSecret } from './skill-router.mjs';
 
 const marker = 'jev-kit-auto-skills-v1';
+const gateMarker = 'jev-kit-work-gate-v1';
+export async function installWorkGate({ home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
+  const configFile = path.join(path.resolve(home), 'auto', 'config.json');
+  const config = JSON.parse(await readFile(configFile, 'utf8'));
+  if (!Array.isArray(config.roots) || !config.roots.length) throw Error('CONFIGURE_AUTHORIZED_ROOTS_FIRST');
+  const file = path.join(codexHome, 'hooks.json');
+  const before = await readFile(file, 'utf8'), hooks = JSON.parse(before);
+  hooks.hooks ??= {};
+  const command = hookCommand(fileURLToPath(new URL('../bin/jev-work-hook.mjs', import.meta.url)), configFile);
+  for (const event of ['UserPromptSubmit', 'PreToolUse']) {
+    const groups = hooks.hooks[event] ?? [];
+    if (!Array.isArray(groups)) throw Error('INVALID_EXISTING_HOOKS');
+    const owned = groups.filter(g => g.description === gateMarker);
+    const desired = { description: gateMarker, ...(event === 'PreToolUse' ? { matcher: '.*' } : {}), hooks: [{ type: 'command', command, timeout: 12 }] };
+    if (owned.length && (owned.length !== 1 || JSON.stringify(owned[0]) !== JSON.stringify(desired))) throw Error('OWNED_GATE_CHANGED_REVIEW_REQUIRED');
+    if (!owned.length) groups.push(desired);
+    hooks.hooks[event] = groups;
+  }
+  const after = JSON.stringify(hooks, null, 2) + '\n';
+  if (after === before) return { status: 'REGISTERED_TRUST_NOT_VERIFIED', hook_file: file };
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('HOOKS_CHANGED');
+  await mkdir(path.join(home, 'auto', 'inbox'), { recursive: true, mode: 0o700 });
+  await writeFile(file, after, { mode: 0o600 });
+  return { status: 'INSTALLED_AWAITING_NATIVE_TRUST', hook_file: file, backup, note: 'New native hook definitions require review. No trust state changed; existing sessions were not restarted.' };
+}
 export function hookCommand(entry, configFile, platform = process.platform) {
   if (platform !== 'win32') return [process.execPath, entry, configFile].map(v => commandQuote(v, platform)).join(' ');
   // Codex can run hooks through the configured PowerShell. A quoted executable

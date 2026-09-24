@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+- Add a separately reviewed task execution gate for UserPromptSubmit and PreToolUse, a small task registry and dedicated prepare/review/close/exception CLI. Check real inference, host disposition, receipt/source hashes and exact one-shot actions; disallow a different delegation assignment under the same task.
+- Distinguish COLLECTED, JEV_JUDGED, REVIEW_REQUIRED and explicit EXEMPT/DEGRADED outcomes. Zero-model work packets cannot satisfy the gate. Do not retry unchanged failed tasks.
+- Preserve native trust and existing hooks. Current local new hooks remain untrusted; cross-session unprompted behavior acceptance is blocked, not claimed passing. No new release.
+
 - Add `jev_prepare_work`: a shared packet for main-host execution and subagent handoff, preserving all originals, constraints, acceptance and review items. Reuse evidence validation and one bounded inference request; no automatic dispatch or model selection.
-- Emit the zero-model `workflow` pre-work reminder for every eligible substantive prompt in a task, while short continuations and excluded prompts still skip the hook. Keep Jev judgments on demand and preserve the existing skill-routing mode.
+- Emit the legacy zero-model `workflow` reminder without filtering out long/code/continuation messages; preserve the paid skill-router's filters. The reminder alone never proves model use.
 
 ## 0.4.2
 

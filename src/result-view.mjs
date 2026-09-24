@@ -10,6 +10,7 @@ export function evidenceTextView(result) {
     ...(result.format === 'jev-work-packet-v1' ? {
       format: 'jev-work-text-v1', task_id: result.task_id, task: result.task, executor: result.executor,
       preparation_status: result.preparation_status, host_review_required: result.host_review_required,
+      judgment_state: result.judgment_state, model: result.model,
       constraints: result.constraints, acceptance: result.acceptance, groups: result.groups,
       unassigned: result.unassigned, review_items: result.review_items, packet_path: result.packet_path,
     } : {}),

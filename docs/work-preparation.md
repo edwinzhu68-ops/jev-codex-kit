@@ -1,5 +1,12 @@
 # Work preparation for the main host and subagents
 
+Execution checks are described in [execution gate](execution-gate.md). Packets now
+expose `judgment_state`: COLLECTED for zero inference, JEV_JUDGED for an actual
+ready judgment, REVIEW_REQUIRED for uncertainty/adverse checks, or STALE_SOURCE.
+They also expose `model` (null for collection). WORK_PREPARED remains a compatibility
+label and is never sufficient for the gate. The gate requires real nonzero
+task-specific judgment and a separate host disposition before binding execution.
+
 Use `jev_prepare_work` before the host does substantive semantic sorting, whether
 the host will execute itself or delegate. Collect the goal, current originals and
 known constraints first; do not solve the whole task merely to ask Jev to endorse it.
