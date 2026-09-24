@@ -1,7 +1,53 @@
 # Validation record
 
+## Native task-gate behavior — 2026-09-23 (UTC logs extend into September 24)
+
+The user explicitly authorized reviewing and trusting the two `jev-kit-work-gate-v1`
+definitions. Native app-server `config/batchWrite` applied that trust and
+`hooks/list` readback reported both trusted; unrelated definitions were preserved.
+This used the native configuration API, not an interactive `/hooks` screen.
+The prior config was backed up before the change. No running Desktop task was restarted.
+
+- Real native CLI/app-server plus `openai/gpt-6-sol` received ordinary prompts
+  without Jev instructions in the prompts. Registered project rules and trusted
+  hooks remained present. These are synthetic isolated tasks, not game acceptance.
+- Fresh queue repair: actual `jev-1.13.0` judgment preceded the accepted source
+  patch (one question, 564.57 ms inference). Node tests passed 2/2. The same
+  session's next independent `peek` task used its own task ID and receipt;
+  `REVIEW_REQUIRED` was retained for host inspection, then tests passed 4/4.
+- A long task description containing code blocks produced a three-question
+  judgment and wrote `third.json`. A separate `continue` turn prepared R4-R6
+  independently before writing `second.json`. The original boundary run's R1-R3
+  phase degraded on a root validation error; that phase is not counted as a pass.
+- Native testing exposed overly strict child-root validation, unhelpful local
+  schema errors, missing canonical action feedback, and child submit events that
+  reset the parent task revision. Fixes rebase authorized child scopes, report
+  pre-inference validation errors, retain exact pending actions, and recognize
+  a fresh one-shot same-task handoff only after a permitted delegation.
+- Current local Windows suite: **99/99 PASS**, including the new regression cases.
+- Native same-agent follow-up: `first-verbatim-r1-r3-20260923` obtained a real
+  three-question judgment (539.05 ms), then spawned the reader. After its return,
+  the host closed that task and prepared `second-categories-r4-r6-20260923`
+  independently (three questions, 583.46 ms), reviewed it and dispatched
+  `multi_agent_v1send_input` to the same child. Both handoffs preserved revision 1;
+  distinct packet paths and execution events prove separate preparation.
+  The prompts did not ask the model to use Jev.
+- Stability observation:
+  Private logs retain an intermittent concurrent hook failure and compound-read
+  denials; subsequent simple reads recovered. This is not a reliability guarantee.
+- Private evidence: `W:/Codex/temp/jev-task-gate-20260923/`, including
+  `trust-before.json`, `trust-after.json`, `native-real-r2-summary.json`,
+  `native-long-final-summary.json`, `native-boundary-summary.json`, and
+  `native-delegation-final-events.jsonl`; original receipts remain in the private
+  kit home. Full prompts, source hashes, model usage and execution events are retained.
+- NOT VERIFIED: existing Desktop tasks loading these hooks, other clients,
+  independent child-session capability transfer, hosted/unhooked execution paths,
+  general task coverage, performance or savings. Hooks cannot establish private
+  thought order or recognize every semantic subtask within one turn.
+
 ## Task execution gate candidate — 2026-09-23
 
+Historical pre-trust snapshot (superseded by the native results above):
 **PARTIAL / native behavioral acceptance BLOCKED, not complete.** Source implements
 task checks, but no unprompted real-model cross-session task has been accepted.
 

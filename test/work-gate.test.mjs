@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, mkdir, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { beginWork, reviewWork, closeWork, exceptionWork, workGate } from '../src/work-gate.mjs';
+import { beginWork, reviewWork, closeWork, exceptionWork, workGate, authorizedWorkScope } from '../src/work-gate.mjs';
 import { prepareWork } from '../src/work-preparation.mjs';
 const denied = r => r?.hookSpecificOutput?.permissionDecision === 'deny';
 async function fixture() {
@@ -79,4 +79,56 @@ test('collection is allowed but shell composition and unrelated preparation writ
   const command = `*** Begin Patch\n*** Add File: ${input}\n+{}\n*** End Patch`;
   assert.equal(await workGate({ ...f.event, tool_input: { command } }, f.options), null);
   assert(denied(await workGate({ ...f.event, tool_input: { command: command.replace('one.json', '../source.js') } }, f.options)));
+});
+
+test('a nested authorized work directory prepares without widening roots or accepting traversal', async () => {
+  const f = await fixture(), nested = path.join(f.home, 'nested'); await mkdir(nested);
+  await writeFile(path.join(nested, 'issue.txt'), 'Validation precedes mutation.');
+  const packet = await f.begin({ root: nested });
+  assert.equal(packet.root, await import('node:fs/promises').then(m => m.realpath(f.home)));
+  assert.equal(packet.source_index[0].path, 'nested/issue.txt');
+  assert.equal(f.calls(), 1);
+  await assert.rejects(authorizedWorkScope({ ...f.work, root: nested, sources: [{id:'x',path:'../issue.txt'}] }, [f.home]), /PATH_NOT_ALLOWED/);
+  const outside = await mkdtemp(path.join(os.tmpdir(), 'jev-gate-outside-'));
+  await symlink(outside, path.join(f.home, 'alias'), 'junction');
+  await assert.rejects(authorizedWorkScope({ ...f.work, root: path.join(f.home, 'alias') }, [f.home]), /ROOT_NOT_ALLOWED/);
+});
+
+test('blocked calls expose a private exact canonical binding, not inferred public tool arguments', async () => {
+  const f = await fixture();
+  const result = await workGate(f.event, f.options);
+  const reason = result.hookSpecificOutput.permissionDecisionReason;
+  const pending = reason.match(/Exact canonical pending action is in (.*?); read it/)[1];
+  assert.deepEqual(JSON.parse(await readFile(pending, 'utf8')), {tool_name:f.event.tool_name,tool_input:f.event.tool_input});
+  assert.match(reason, /rather than guessing/);
+});
+
+test('correcting a locally rejected root does not reserve or repeat an inference attempt', async () => {
+  const f = await fixture();
+  await assert.rejects(f.begin({root:os.tmpdir()}), /ROOT_NOT_ALLOWED/);
+  assert.equal(f.calls(), 0);
+  const packet = await f.begin();
+  assert.equal(packet.judgment_state, 'JEV_JUDGED'); assert.equal(f.calls(), 1);
+});
+
+test('an executed exact child handoff preserves parent preparation once; new messages still invalidate it', async () => {
+  const f = await fixture(); await f.begin();
+  const spawn = {...f.event,tool_name:'spawn_agent',tool_input:{message:'Inspect original queue evidence for repair-queue only.'}};
+  await f.review([spawn,f.event]); assert(!denied(await workGate(spawn,f.options)));
+  const submit = {...f.event,hook_event_name:'UserPromptSubmit',prompt:spawn.tool_input.message};
+  assert.match((await workGate(submit,f.options)).hookSpecificOutput.additionalContext,/same-task handoff/);
+  assert(!denied(await workGate(f.event,f.options))); assert.equal(f.calls(),1);
+  await f.review([f.event]); await workGate(submit,f.options);
+  assert(denied(await workGate(f.event,f.options)));
+});
+
+test('unused delegation and different multi-agent followups never count as a handoff', async () => {
+  const f=await fixture(); await f.begin();
+  const first={...f.event,tool_name:'multi_agent_v1followup_task',tool_input:{message:'Check original text'}};
+  await f.review([first]);
+  await assert.rejects(f.review([{...first,tool_input:{message:'Check categories instead'}}]),/DIFFERENT_ASSIGNMENT_REQUIRES_NEW_TASK/);
+  await workGate({...f.event,hook_event_name:'UserPromptSubmit',prompt:first.tool_input.message},f.options);
+  assert(denied(await workGate(first,f.options)));
+  assert.equal(await workGate({...f.event,tool_name:'multi_agent_v1wait_agent',tool_input:{}},f.options),null);
+  assert.equal(await workGate({...f.event,tool_name:'Bash',tool_input:{command:'Get-FileHash issue.txt'}},f.options),null);
 });

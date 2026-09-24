@@ -24,8 +24,15 @@ semantic boundaries inside a turn; a hook cannot observe private reasoning.
    `work`, the complete [work preparation](work-preparation.md) input. Each distinct
    task requires its own task_id. Supply actual task-specific `labels` and/or
    relationship `checks`; the gate rejects zero-question packets. Sources stay
-   inside existing explicitly authorized roots. Inbox files are local input only;
+   inside existing explicitly authorized roots. A narrower child directory is
+   rebased to its nearest configured ancestor before collection; canonical-path
+   checks reject junction escapes and traversal, without registering new roots.
+   Inbox files are local input only;
    they do not expand source permissions.
+   Use the current working directory as `work.root`, not an arbitrary broad
+   ancestor. Evidence IDs are lowercase (`r1`), while original report text may
+   retain uppercase IDs (`R1`). Correctable schema/scope errors return local
+   diagnostics before reserving inference; they are not provider failures.
 3. Run `node /absolute/path/bin/jev-work.mjs prepare INPUT.json`. This registers
    COLLECTED, invokes the existing real preparation path, and records the actual
    model, question count, usage, original evidence, hashes and resulting groups.
@@ -35,7 +42,10 @@ semantic boundaries inside a turn; a hook cannot observe private reasoning.
    and dependencies locally. Add a review JSON with `session_id`, `task_id`,
    `disposition` (`adopt`, `retain_for_inspection`, or `override`), a substantive
    `explanation`, and `actions: [{tool_name, tool_input}]`. Use actual canonical
-   hook names and exact arguments. Run `node /absolute/path/bin/jev-work.mjs review
+   hook names and exact arguments. A blocked call's feedback points to a private
+   `.pending.json` containing its complete canonical action. Read and copy that
+   action: public `exec_command`/apply_patch arguments may differ from hook input.
+   Run `node /absolute/path/bin/jev-work.mjs review
    REVIEW.json`. Review binds the calls; it is not another inference.
 5. Execute. PreToolUse verifies packet and receipt bytes, all source hashes,
    session revision, host review and the exact one-shot action binding. An action
@@ -52,6 +62,12 @@ file. Each assignment, including follow-up to an existing agent, gets independen
 preparation. The same-task executor can consume the host's original packet; the
 registry does not yet transfer a capability into an independently identified
 child session. That client path requires verification, not a promise of reuse.
+For clients reporting child submissions under the parent session ID, a fresh
+exact assignment that already passed the execution check can consume one pending
+handoff within five minutes, preserving that task revision. An unused binding,
+similar text or another assignment does not qualify. Native spawn followed by a
+different assignment to the same child has been observed using separate receipts;
+this does not establish coverage for every client dialect or existing session.
 
 ## Status and exceptions
 
@@ -66,6 +82,9 @@ Service failure records DEGRADED, blocks execution until explicitly resolved, an
 forbids another attempt under the same task_id. Do not change IDs or entrypoints
 to reroll an unchanged failed judgment. Changed evidence/goal uses a new revision
 ID and only asks affected questions. No timeout is treated as approval.
+Safe local error codes such as ROOT_NOT_ALLOWED remain in the state record;
+provider error bodies are never exposed. Local validation failure is not proof
+that an API request was sent or that the provider was unavailable.
 
 For a pure calculation, an already specified mechanical step, unauthorized external
 data, or a failed service, use `node /absolute/path/bin/jev-work.mjs exception
