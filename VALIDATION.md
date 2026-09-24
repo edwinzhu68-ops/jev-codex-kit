@@ -1,5 +1,29 @@
 # Validation record
 
+## Desktop send interruption after enabling the gate — 2026-09-24 UTC
+
+The user reported that this existing Desktop conversation could not send a
+message. They ran `node bin/jev-kit.mjs auto disable` and restarted the client;
+messages then sent again. This is a user-observed incident and recovery, not a
+confirmed root-cause attribution to either new hook. Do not count the prior fresh
+CLI/app-server acceptance as existing Desktop-session acceptance.
+
+Current readback after recovery: `auto/config.json` has `enabled: false`.
+`hooks.json` still registers the original reminder and both
+`jev-kit-work-gate-v1` definitions; `config.toml` still contains their native
+trust entries. The shared `enabled` flag makes both hook handlers return without
+work when disabled. Therefore the present installation is **registered and
+trusted but inactive**. The user's working conversation must not be re-enabled
+or restarted as a diagnostic. No hook or trust files were changed in this audit.
+
+The original failure's precise stage, error and duration remain unobserved.
+Possible submit-hook latency, client hook loading and UI transport errors must
+be distinguished by timestamped native hook/client evidence before attributing
+cause. Keep the recovery state intact; a future fix needs an isolated Desktop
+acceptance that proves a normal message can be sent and a task completed, plus
+rollback that still works if the submit path is impaired. `auto enable` alone is
+not such an acceptance test.
+
 ## Native task-gate behavior — 2026-09-23 (UTC logs extend into September 24)
 
 The user explicitly authorized reviewing and trusting the two `jev-kit-work-gate-v1`
