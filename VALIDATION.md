@@ -1,5 +1,48 @@
 # Validation record
 
+## Live task-scoped gate repair — 2026-09-24 UTC
+
+- The first enabled v2 trial exposed a usability defect: the ongoing session
+  blocked `clocksleep` and read-only `gh run list`, and exact one-shot bindings
+  made every adaptive main-host step require another review. The gate was
+  disabled during repair. Its native v2 definitions and trust were preserved.
+- `review` now accepts `execution_scope: "task"` after an actual task-specific
+  Jev judgment. That scope permits further non-delegation main-host actions in
+  the same reviewed task without a per-call binding. The older `"bound"` mode
+  remains the default. Distinct agent assignments still need an unused exact
+  action and an independent prepared task. Passive waits and narrowly read-only
+  GitHub Actions queries are allowed before preparation.
+- Source hashes are checked before the first task-scoped action and again for
+  delegation. Once adaptive main-host execution begins, the task may edit its
+  pinned source; receipt and packet bytes continue to be checked on every
+  action, while the host owns subsequent source-state verification. A new user
+  task still invalidates the old task revision.
+- Windows local suite: **110/110 PASS**; vendor build PASS (transpilation only).
+  The scoped Jev work packet had 6 questions and returned **REVIEW_REQUIRED**;
+  it correctly contradicted the old same-task-continuation claim (confidence
+  0.96) but weakly marked passive waits as already supported (confidence 0.17),
+  contrary to the observed denial. A complete-coverage Jev diff review also
+  returned **escalate** (composite 0.66875, safe-to-apply 0.13). After the
+  concurrent-tool fix changed the diff, a fresh complete-coverage review again
+  returned **escalate** (composite 0.7365, safe-to-apply 0.34). Neither result
+  is an automatic approval.
+- For live acceptance, a separate current-source packet made one real
+  `jev-1.13.0` call (5 questions, 4330 input / 231 output tokens), returned
+  **REVIEW_REQUIRED**, and received a host `execution_scope: "task"` review
+  with zero prebound actions. With the user-profile gate enabled, this ongoing
+  session then completed two different unbound main-host tool calls, a passive
+  `clocksleep`, and `gh run list`. The authenticated app-server again completed
+  `UserPromptSubmit` and replied `消息已收到`; both v2 hooks read back as trusted.
+  Two further independent tool calls ran concurrently without a false denial.
+  The short same-session lock wait is capped at one second; a persistent lock
+  still fails closed. The rollback watchdog observed the acceptance marker and
+  exited without disabling the successful activation.
+- The gate is **enabled** at this readback. A fresh message through the
+  existing Desktop UI after activation is still **NOT RUN**. Native behavior
+  for every child-client dialect and semantic accuracy across real tasks are
+  not established by these checks. If message submission fails, the previously
+  verified external recovery is `node bin/jev-kit.mjs auto disable`.
+
 ## User-profile v2 activation — 2026-09-24 UTC
 
 - The user's explicit activation request superseded the earlier keep-disabled

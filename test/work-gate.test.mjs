@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile, mkdir, symlink } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, mkdir, rmdir, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
@@ -9,6 +9,7 @@ import { beginWork, reviewWork, closeWork, exceptionWork, workGate, authorizedWo
 import { prepareWork } from '../src/work-preparation.mjs';
 import { autoStatus } from '../src/auto-status.mjs';
 import { hookCommand } from '../src/auto-install.mjs';
+import { hashText } from '../src/skill-router.mjs';
 const denied = r => r?.hookSpecificOutput?.permissionDecision === 'deny';
 async function fixture() {
   const home = await mkdtemp(path.join(os.tmpdir(), 'jev-work-gate-'));
@@ -35,6 +36,79 @@ test('execution requires actual judgment, host review and a one-shot exact actio
   assert(denied(await workGate(f.event, f.options)));
   await f.review(); assert(!denied(await workGate(f.event, f.options)));
   assert(denied(await workGate(f.event, f.options))); assert.equal(f.calls(), 1);
+});
+test('reviewed task scope permits adaptive main-host steps but not a new task or unbound delegation', async () => {
+  const f = await fixture();
+  await f.begin();
+  await reviewWork({ session_id: 's1', task_id: f.work.task_id, disposition: 'adopt',
+    explanation: 'Keep the source requirements and execute this one queue repair.', execution_scope: 'task' }, f.options);
+  assert(!denied(await workGate(f.event, f.options)));
+  await writeFile(path.join(f.home, 'issue.txt'), 'Queue repair in progress.');
+  const followup = { ...f.event, tool_name: 'Bash', tool_input: { command: 'npm test' } };
+  assert(!denied(await workGate(followup, f.options)));
+  const assignment = { ...f.event, tool_name: 'spawn_agent', tool_input: { message: 'Fix the queue independently.' } };
+  assert(denied(await workGate(assignment, f.options)));
+  await workGate({ ...f.event, hook_event_name: 'UserPromptSubmit', prompt: 'Start a different task' }, f.options);
+  assert(denied(await workGate(followup, f.options)));
+  assert.equal(f.calls(), 1);
+});
+test('task scope checks sources before first execution and still checks receipt bytes thereafter', async () => {
+  const f = await fixture();
+  const packet = await f.begin();
+  await reviewWork({ session_id: 's1', task_id: f.work.task_id, disposition: 'adopt',
+    explanation: 'Use one reviewed packet for queue repair.', execution_scope: 'task' }, f.options);
+  await writeFile(path.join(f.home, 'issue.txt'), 'Changed before work started.');
+  assert(denied(await workGate(f.event, f.options)));
+  const g = await fixture();
+  const current = await g.begin();
+  await reviewWork({ session_id: 's1', task_id: g.work.task_id, disposition: 'adopt',
+    explanation: 'Use one reviewed packet for queue repair.', execution_scope: 'task' }, g.options);
+  assert(!denied(await workGate(g.event, g.options)));
+  await writeFile(current.receipt_path, '{}');
+  assert(denied(await workGate(g.event, g.options)));
+  assert.equal(packet.metrics.workflow_inference_calls, 1);
+});
+test('task-scoped main actions do not relax exact fresh delegation bindings', async () => {
+  const f = await fixture();
+  await f.begin();
+  const assignment = { ...f.event, tool_name: 'spawn_agent', tool_input: { message: 'Fix queue within this prepared task.' } };
+  await reviewWork({ session_id: 's1', task_id: f.work.task_id, disposition: 'adopt',
+    explanation: 'Keep the queue task and one exact executor handoff.', execution_scope: 'task',
+    actions: [{ tool_name: assignment.tool_name, tool_input: assignment.tool_input }] }, f.options);
+  assert(!denied(await workGate(f.event, f.options)));
+  assert(!denied(await workGate(assignment, f.options)));
+  assert(denied(await workGate(assignment, f.options)));
+  const different = { ...assignment, tool_input: { message: 'Audit queue persistence instead.' } };
+  assert(denied(await workGate(different, f.options)));
+  const g = await fixture();
+  await g.begin();
+  await reviewWork({ session_id: 's1', task_id: g.work.task_id, disposition: 'adopt',
+    explanation: 'Keep the queue task and one exact executor handoff.', execution_scope: 'task',
+    actions: [{ tool_name: assignment.tool_name, tool_input: assignment.tool_input }] }, g.options);
+  assert(!denied(await workGate(g.event, g.options)));
+  await writeFile(path.join(g.home, 'issue.txt'), 'Host edited the source before delegation.');
+  assert(denied(await workGate(assignment, g.options)));
+});
+test('parallel native checks wait briefly for the same-session state lock', async () => {
+  const f = await fixture();
+  await f.begin();
+  await reviewWork({ session_id: 's1', task_id: f.work.task_id, disposition: 'adopt',
+    explanation: 'Review the queue repair before concurrent tool calls.', execution_scope: 'task' }, f.options);
+  const lock = path.join(f.home, 'auto', 'work', hashText('s1') + '.json.lock');
+  await mkdir(lock);
+  const unlock = (async () => { await new Promise(resolve => setTimeout(resolve, 90)); await rmdir(lock); })();
+  const result = await workGate(f.event, f.options);
+  await unlock;
+  assert(!denied(result));
+});
+test('passive waits and narrowly read-only GitHub Actions queries do not need a work receipt', async () => {
+  const f = await fixture();
+  for (const name of ['clocksleep', 'clock__curr_time', 'web.run'])
+    assert.equal(await workGate({ ...f.event, tool_name: name, tool_input: {} }, f.options), null);
+  for (const command of ['gh run list -R owner/repo --limit 3', 'gh run view 123 --json status', 'gh workflow list'])
+    assert.equal(await workGate({ ...f.event, tool_name: 'Bash', tool_input: { command } }, f.options), null);
+  for (const command of ['gh run cancel 123', 'gh run view 123; Remove-Item issue.txt'])
+    assert(denied(await workGate({ ...f.event, tool_name: 'Bash', tool_input: { command } }, f.options)));
 });
 test('spawn and follow-up assignments cannot borrow another task action even for the same file', async () => {
   const f = await fixture(); await f.begin();
@@ -102,9 +176,9 @@ test('blocked calls expose a private exact canonical binding, not inferred publi
   const f = await fixture();
   const result = await workGate(f.event, f.options);
   const reason = result.hookSpecificOutput.permissionDecisionReason;
-  const pending = reason.match(/Exact canonical pending action is in (.*?); read it/)[1];
+  const pending = reason.match(/Exact canonical pending action is in (.*?); use it/)[1];
   assert.deepEqual(JSON.parse(await readFile(pending, 'utf8')), {tool_name:f.event.tool_name,tool_input:f.event.tool_input});
-  assert.match(reason, /rather than guessing/);
+  assert.match(reason, /bound actions and every delegation/);
 });
 
 test('correcting a locally rejected root does not reserve or repeat an inference attempt', async () => {

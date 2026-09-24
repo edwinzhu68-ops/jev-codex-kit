@@ -13,8 +13,13 @@ was disabled with `auto disable`. On the user's later explicit activation
 request, v2 was migrated, natively trusted and enabled under an automatic
 rollback watchdog. Authenticated CLI and app-server turns completed with v2;
 the ongoing session also observed a real tool denial, and the first watchdog
-successfully disabled the gate. A new message sent through the existing Desktop
-UI after activation remains untested. If sending fails again, run `auto disable`
+successfully disabled the gate. Subsequent live use showed that v2 also blocked
+passive waiting and read-only CI checks, and required exact bindings for every
+adaptive main-host action. The gate was disabled while those usability defects
+were repaired. Task-scoped review and passive exceptions then passed local and
+current-session native checks; the user-profile gate is enabled again. A new
+message sent through the existing Desktop UI after activation remains untested.
+If sending fails again, run `auto disable`
 from an external terminal. `auto status` reports current enablement independently
 of the last historical routing result.
 
@@ -62,17 +67,25 @@ semantic boundaries inside a turn; a hook cannot observe private reasoning.
    requirements. Compose the work package using these judgments. Resolve ownership
    and dependencies locally. Add a review JSON with `session_id`, `task_id`,
    `disposition` (`adopt`, `retain_for_inspection`, or `override`), a substantive
-   `explanation`, and `actions: [{tool_name, tool_input}]`. Use actual canonical
-   hook names and exact arguments. A blocked call's feedback points to a private
-   `.pending.json` containing its complete canonical action. Read and copy that
-   action: public `exec_command`/apply_patch arguments may differ from hook input.
-   Run `node /absolute/path/bin/jev-work.mjs review
-   REVIEW.json`. Review binds the calls; it is not another inference.
-5. Execute. PreToolUse verifies packet and receipt bytes, all source hashes,
-   session revision, host review and the exact one-shot action binding. An action
-   can be rebound after an interrupted call with another review of the same fresh
-   task. Do not repeat inference for unchanged material. A different delegation
-   message requires a new task; the registry rejects changing a task's assignment.
+   `explanation`, and `execution_scope`. Use `"task"` for one reviewed main-host
+   work package: its `actions` may be omitted and adaptive non-delegation tools
+   can follow without another review. The default `"bound"` retains exact one-shot
+   action binding and requires nonempty `actions: [{tool_name, tool_input}]`.
+   Every delegation, including a follow-up, still requires an exact bound action
+   and its own task packet. A blocked call's feedback points to a private
+   `.pending.json` with its canonical action; use that for bound actions rather
+   than guessing from public tool arguments. Run `node /absolute/path/bin/jev-work.mjs
+   review REVIEW.json`. Review is the host's disposition, not another inference.
+5. Execute. PreToolUse verifies packet and receipt bytes, task revision and host
+   review. It checks every pinned source before the first task-scoped action.
+   Once main-host execution starts, source files can change as part of that task;
+   receipt integrity remains checked, while the host is responsible for its own
+   edits and subsequent source state. Bound mode continues checking source hashes
+   and exact actions. Delegation always requires a fresh source check and an
+   unused exact binding. Same-session native checks wait briefly for one another's
+   state updates (at most one second), then fail closed if a lock remains. Do not
+   repeat inference for unchanged material. A
+   different delegation message requires a new task.
 6. Finish the work package with `node /absolute/path/bin/jev-work.mjs close SESSION
    TASK_ID`. The next package requires new preparation. Closing is a lifecycle
    operation, not a successful task-acceptance claim.
@@ -117,10 +130,11 @@ Exceptions are host attestations, not machine proof of semantic eligibility.
 
 ## Collection, coverage and limits
 
-Simple read commands and narrowly scoped inbox JSON additions are allowed before
-preparation to avoid a deadlock. Shell scripts, compound commands, arbitrary MCP
-calls, edits and delegation require bindings. A read not recognized by the narrow
-allowlist needs an explicit mechanical-step exception; it is not automatically
+Simple read commands, passive waits, narrow GitHub Actions read queries, and
+narrowly scoped inbox JSON additions are allowed before preparation to avoid a
+deadlock. Shell scripts, compound commands, arbitrary MCP calls, edits and
+delegation still require a reviewed task or exact exception. A read not recognized
+by the narrow allowlist needs an explicit mechanical-step exception; it is not automatically
 unsafe. The shell allowlist is conservative, not a security sandbox. Custom shell
 profiles/aliases and hostile local state are outside this guardrail's trust model.
 
