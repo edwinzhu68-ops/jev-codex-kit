@@ -1,6 +1,6 @@
 # Jev Coding Kit
 
-当前 `main` 增加[任务执行前检查](docs/execution-gate.md)：新任务先取得真实 Jev 回执，主控复核后才能放行绑定的执行或委派。安装命令为 `node bin/jev-kit.mjs auto install-work-gate`，需要在 Codex `/hooks` 审查两个新增 hook。**本机已注册但仍未信任；尚未通过“不提 Jev 的真实新旧会话任务”验收，不能宣称自动流程已全面生效。** 本次 94 项本地测试与两次真实 Jev 接口联调仅验证各自边界，见[验收记录](VALIDATION.md)。尚未发布新 Release。
+**当前采用 Codex 按需调用 Jev。** Codex 根据任务决定是否使用 MCP/技能中的结构化判断；执行或委派不要求 Jev 回执。实验性[任务执行门禁](docs/execution-gate.md)曾在真实 Desktop 消息发送路径失败，已退出当前工作流；它的 CLI/app-server 测试不能替代桌面验收。见[验收记录](VALIDATION.md)。
 
 新增：[自动静默入口](docs/automatic-codex.md)和[Computer Use / 浏览器整合说明](docs/integration-map.md)。浏览器已实测一次调用连续完成两次点击；桌面原生操作仍需兼容运行环境，不能用浏览器结果代替验收。
 
@@ -41,7 +41,7 @@
 
 安装向导在需要时隐藏输入 API Key。Windows 使用当前用户 DPAPI 加密保存；macOS/Linux 使用用户目录中的权限 0600 文件（不加密）。也可自行设置 `TYPESAFE_API_KEY` 环境变量，不保存密钥。设置了环境变量时，启动 Codex 的进程也必须继承它。配置和回执保存在 `~/.jev-codex-kit`，不在源码仓库。
 
-Codex 安装会添加名为 `jev-kit` 的 MCP、`jev-codex-kit` / `jev-ui` 两个技能和自动分工提示 hook；首次仍需 Codex 原生信任该 hook。其他服务和全局 AGENTS.md 保留。已有自定义自动目录和模式不会被默认替换；付费技能推荐仍可选 `auto mode skills`。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
+Codex 安装会添加名为 `jev-kit` 的 MCP 与 `jev-codex-kit` / `jev-ui` 技能；默认不安装 UserPromptSubmit 或 PreToolUse hook。旧自动配置与判断历史保留，但不会由 setup 重新启用。其他服务和全局 AGENTS.md 保留。**保留安装目录**，注册会引用其绝对路径。不要对同一判断同时调用旧 Jev 服务和这个工具包。
 
 升级时在原安装目录更新代码、安装依赖并构建，然后运行 `node bin/jev-kit.mjs setup --root "项目路径" --client codex --upgrade --no-key-prompt`。会备份更新技能、刷新已选技能的哈希，保留凭据、历史判断和其他 hook。只升级 UI 技能可运行 `ui install --upgrade`，之后 `auto refresh`。
 

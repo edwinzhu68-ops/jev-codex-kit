@@ -70,6 +70,30 @@ export async function installWorkGateV2({ home = kitHome(), codexHome = process.
   await writeFile(file, after, { mode: 0o600 });
   return { status: 'INSTALLED_AWAITING_NATIVE_TRUST', hook_file: file, backup, note: 'Distinct submit/tool hook definitions require native review. Enabled state is unchanged.' };
 }
+export async function uninstallWorkGateV2({ home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
+  const file = path.join(codexHome, 'hooks.json');
+  const before = await readFile(file, 'utf8'), hooks = JSON.parse(before);
+  const configFile = path.join(path.resolve(home), 'auto', 'config.json');
+  const entry = fileURLToPath(new URL('../bin/jev-work-hook.mjs', import.meta.url));
+  let removed = 0;
+  for (const event of ['UserPromptSubmit', 'PreToolUse']) {
+    const groups = hooks.hooks?.[event];
+    if (groups == null) continue;
+    if (!Array.isArray(groups)) throw Error('INVALID_EXISTING_HOOKS');
+    const owned = groups.filter(group => group.description === gateMarkerV2);
+    if (!owned.length) continue;
+    const desired = { description: gateMarkerV2, ...(event === 'PreToolUse' ? { matcher: '.*' } : {}), hooks: [{ type: 'command', command: hookCommand(entry, configFile, process.platform, event), timeout: event === 'UserPromptSubmit' ? 5 : 12 }] };
+    if (owned.length !== 1 || JSON.stringify(owned[0]) !== JSON.stringify(desired)) throw Error('OWNED_GATE_CHANGED_REVIEW_REQUIRED');
+    hooks.hooks[event] = groups.filter(group => group !== owned[0]);
+    removed++;
+  }
+  if (!removed) return { status: 'NOT_INSTALLED' };
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('HOOKS_CHANGED');
+  await writeFile(file, JSON.stringify(hooks, null, 2) + '\n', { mode: 0o600 });
+  return { status: 'REMOVED', removed, backup, note: 'Only exact owned v2 gate definitions were removed. Native trust and other hooks were preserved.' };
+}
 export function hookCommand(entry, configFile, platform = process.platform, expectedEvent = null) {
   const args = [process.execPath, entry, configFile, ...(expectedEvent ? [expectedEvent] : [])];
   if (platform !== 'win32') return args.map(v => commandQuote(v, platform)).join(' ');
@@ -197,11 +221,26 @@ export async function uninstallAuto({ home = kitHome(), codexHome = process.env.
   const command = hookCommand(fileURLToPath(new URL('../bin/jev-auto-hook.mjs', import.meta.url)), path.join(path.resolve(home),'auto','config.json'));
   const owned = groups.filter(g => g.description === marker);
   if (!owned.length) return {status:'NOT_INSTALLED'};
-  if (owned.length !== 1 || owned[0].hooks?.length !== 1 || owned[0].hooks[0].command !== command) throw Error('OWNED_HOOK_CHANGED_REVIEW_REQUIRED');
+  if (owned.length !== 1 || owned[0].hooks?.length !== 1 ||
+      (owned[0].hooks[0].command !== command && !sameWindowsAutoHookCommand(owned[0].hooks[0].command, command))) throw Error('OWNED_HOOK_CHANGED_REVIEW_REQUIRED');
   hooks.hooks.UserPromptSubmit = groups.filter(g => g !== owned[0]);
   const backup = file + '.backup-' + randomUUID();
   await copyFile(file, backup, constants.COPYFILE_EXCL);
   if (await readFile(file, 'utf8') !== before) throw Error('HOOKS_CHANGED');
   await writeFile(file, JSON.stringify(hooks,null,2)+'\n', {mode:0o600});
   return {status:'REMOVED',backup,note:'Only the owned hook was removed. Credentials, receipts, MCP servers and other hooks are preserved.'};
+}
+
+function sameWindowsAutoHookCommand(actual, expected) {
+  const prefix = expected.split(' -EncodedCommand ')[0] + ' -EncodedCommand ';
+  if (typeof actual !== 'string' || !actual.startsWith(prefix)) return false;
+  const decode = value => {
+    const encoded = value.slice(prefix.length);
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return null;
+    const script = Buffer.from(encoded, 'base64').toString('utf16le');
+    const match = script.match(/^\[Console\]::InputEncoding=\[Text\.UTF8Encoding\]::new\(\);\[Console\]::OutputEncoding=\[Text\.UTF8Encoding\]::new\(\); & '([^']+)' '([^']+)' '([^']+)'; exit \$LASTEXITCODE$/);
+    return match?.slice(1) ?? null;
+  };
+  const a = decode(actual), b = decode(expected);
+  return !!a && !!b && a.length === b.length && a.every((item, i) => path.win32.normalize(item.replaceAll('/', '\\')).toLowerCase() === path.win32.normalize(b[i].replaceAll('/', '\\')).toLowerCase());
 }

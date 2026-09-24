@@ -1,5 +1,10 @@
 # Automatic, quiet Codex entry
 
+**Historical opt-in feature:** On 2026-09-24 the user returned to Codex
+on-demand Jev calls. The existing Desktop UI could not send messages with the
+native gate enabled. Normal setup no longer installs a reminder or gate hook;
+the behavior below is retained for diagnosis and explicit experiments only.
+
 **The legacy workflow mode below only reminds the host.** For a task-bound
 execution check, see [execution gate](execution-gate.md). The new gate registers
 separate UserPromptSubmit/PreToolUse definitions that require native review.

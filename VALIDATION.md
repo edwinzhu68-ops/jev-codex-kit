@@ -1,5 +1,28 @@
 # Validation record
 
+## Codex on-demand policy after Desktop send failure — 2026-09-24 UTC
+
+The user reported that Desktop message submission failed again while the native
+v2 gate was enabled. Running `auto disable` restored their ability to send a
+message. This makes existing-Desktop message submission **FAIL** for the gate;
+the exact fault within the hook/client chain remains unknown. Earlier CLI and
+app-server PASS results below are historical and do not override this failure.
+The user chose Codex on-demand Jev calls instead of mandatory pre-work judgment.
+The v2 gate and automatic reminder hooks are to be removed from the active
+profile, leaving the MCP, skills, encrypted credential and receipts in place.
+No claim of universal old-session instruction reload or Desktop acceptance is
+made from file edits alone.
+
+Current local readback: `auto/config.json` remains `enabled:false`;
+`hooks.json` has zero registered UserPromptSubmit and PreToolUse entries after
+exact v2 and legacy reminder removal. Both removals created adjacent backups.
+The profile was not restarted, and no enabled-hook Desktop retest was attempted.
+The on-demand code/documentation batch passed **111/111** local tests outside
+the filesystem sandbox. Its first sandboxed full run failed only where source
+discovery tried to spawn a child process (`spawn EPERM`); the unrestricted rerun
+passed. This test result does not establish that old Desktop sessions have
+reloaded the edited AGENTS.md or that the failed gate has been repaired.
+
 ## Live task-scoped gate repair — 2026-09-24 UTC
 
 - The first enabled v2 trial exposed a usability defect: the ongoing session

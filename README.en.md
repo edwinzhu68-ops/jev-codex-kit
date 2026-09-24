@@ -1,13 +1,9 @@
 # Jev Coding Kit
 
-Main now includes an opt-in [task execution gate](docs/execution-gate.md): actual
-task judgments, explicit host disposition, fresh evidence and exact action
-bindings before covered execution/delegation. Install with `node bin/jev-kit.mjs
-auto install-work-gate`, then review the two new native hooks in Codex `/hooks`.
-The current local installation is registered but UNTRUSTED. Unprompted real-model
-new/existing-session behavior has NOT passed acceptance. 94 local tests and two
-live provider integration calls do not substitute for it. See [validation](VALIDATION.md).
-No new Release has been published.
+Codex now calls Jev on demand through MCP and skills. The experimental
+[task execution gate](docs/execution-gate.md) failed the existing Desktop
+message-send path and is not part of the active workflow. CLI/app-server checks
+did not establish Desktop acceptance. See [validation](VALIDATION.md).
 
 New: [quiet automatic Codex entry](docs/automatic-codex.md) and a [CUA/browser integration map](docs/integration-map.md). A real browser run completed two clicks inside one host call. Native desktop execution requires a supported runtime and remains separately unverified.
 
@@ -36,7 +32,7 @@ npm run doctor
 
 The setup prompt hides your key. Windows uses current-user DPAPI; macOS/Linux use an unencrypted mode-0600 file in `~/.jev-codex-kit`. Alternatively set `TYPESAFE_API_KEY` in the environment inherited by your MCP host. API usage can cost money; no shared credentials are included. Keep the installation folder after registration.
 
-Codex setup adds the `jev-kit` MCP entry, coding/UI skills and a local workflow-hint submit hook (native hook trust still required). Existing custom catalogs and modes are preserved; `auto mode skills` selects the optional paid router. Other clients retain their MCP/Pi setup. Update in place, build, then use `setup --root PATH --client codex --upgrade --no-key-prompt` for backed-up skill replacement and explicit pin refresh. Config and source-bearing receipts stay outside the repository. Use `JEV_KIT_HOME` consistently. Doctor is offline; READY is not a live API or semantic quality result.
+Codex setup adds the `jev-kit` MCP entry and coding/UI skills, without native submit/tool hooks. Existing custom catalogs and modes are preserved but setup does not re-enable them. Other clients retain their MCP/Pi setup. Update in place, build, then use `setup --root PATH --client codex --upgrade --no-key-prompt` for backed-up skill replacement. Config and source-bearing receipts stay outside the repository. Use `JEV_KIT_HOME` consistently. Doctor is offline; READY is not a live API or semantic quality result.
 
 ## Use
 

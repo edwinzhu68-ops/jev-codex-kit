@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { prepareAuto, installAuto, installWorkGate, installWorkGateV2, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
+import { prepareAuto, installAuto, installWorkGate, installWorkGateV2, uninstallWorkGateV2, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
 import { runAutoHook, eligiblePrompt, withinRoot } from '../src/auto-hook.mjs';
 
 async function fixture(mode = 'skills') {
@@ -85,6 +85,29 @@ test('event-specific gate registration preserves unrelated hooks and requires ex
   assert.equal(migrated.hooks.UserPromptSubmit.filter(group => group.description === 'jev-kit-work-gate-v2').length, 1);
   assert.equal(migrated.hooks.PreToolUse.filter(group => group.description === 'jev-kit-work-gate-v2').length, 1);
   assert.deepEqual(migrated.hooks.Stop, legacy.original.hooks.Stop);
+});
+
+test('v2 gate removal preserves unrelated hooks and refuses modified owned entries', async () => {
+  const f = await fixture();
+  const options = { home: path.dirname(path.dirname(f.installed.config_file)), codexHome: path.dirname(f.installed.hook_file) };
+  await installWorkGateV2(options);
+  const installed = JSON.parse(await readFile(f.installed.hook_file));
+  const result = await uninstallWorkGateV2(options);
+  assert.equal(result.status, 'REMOVED');
+  assert.equal(result.removed, 2);
+  assert.deepEqual(JSON.parse(await readFile(result.backup)), installed);
+  const after = JSON.parse(await readFile(f.installed.hook_file));
+  assert.deepEqual(after.hooks.Stop, f.original.hooks.Stop);
+  assert.equal(after.hooks.UserPromptSubmit.length, 1);
+  assert.equal(after.hooks.PreToolUse.length, 0);
+  assert.equal((await uninstallWorkGateV2(options)).status, 'NOT_INSTALLED');
+  await installWorkGateV2(options);
+  const changed = JSON.parse(await readFile(f.installed.hook_file));
+  changed.hooks.PreToolUse[0].hooks[0].timeout = 13;
+  await writeFile(f.installed.hook_file, JSON.stringify(changed));
+  const before = await readFile(f.installed.hook_file, 'utf8');
+  await assert.rejects(uninstallWorkGateV2(options), /OWNED_GATE_CHANGED_REVIEW_REQUIRED/);
+  assert.equal(await readFile(f.installed.hook_file, 'utf8'), before);
 });
 
 test('mode changes preserve prior decisions and refresh preserves the selected mode', async () => {

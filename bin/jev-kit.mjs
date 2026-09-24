@@ -29,6 +29,7 @@ const help = `Jev Coding Kit 0.4.2 (repository/package: jev-codex-kit)
   auto install-work-gate                     Add task execution checks (new native trust required)
   auto install-work-gate-v2                  Install event-specific gates in a new config (native trust required)
   auto migrate-work-gate-v2                  Replace exact v1 gates with v2 (native re-review required)
+  auto uninstall-work-gate-v2                Remove exact owned v2 gate hooks with backup
   auto status                                Read current auto enablement and last routing result
   auto mode workflow|skills                  Local work-sharing hint (default) or paid skill routing
   auto refresh                               Explicitly repin selected skill files; preserve history
@@ -88,16 +89,9 @@ async function registerCodex() {
   }
   await installCodexSkill('jev-codex-kit',{upgrade:argv.includes('--upgrade')});
   await installUISkill();
-  const { installAuto, refreshAuto } = await import('../src/auto-install.mjs');
-  const configFile=path.join(kitHome(),'auto','config.json');
-  if(await access(configFile).then(()=>true,()=>false)) {
-    if(argv.includes('--upgrade'))console.log(JSON.stringify(await refreshAuto()));
-  } else {
-    const roots=(await readSettings()).roots;
-    const skill_files=['jev-codex-kit','jev-ui'].map(n=>path.join(homedir(),'.agents','skills',n,'SKILL.md'));
-    console.log(JSON.stringify(await installAuto({roots,skill_files})));
-  }
-  console.log('Codex MCP registered as jev-kit; dedicated skills installed. Open a new task if current tools are stale.');
+  // Codex uses the MCP and installed skills on demand. Native submit/tool hooks
+  // are experimental opt-ins and are never installed or re-enabled by setup.
+  console.log('Codex MCP registered as jev-kit; dedicated skills installed. Jev hooks are opt-in. Open a new task if current tools are stale.');
 }
 async function installUISkill() {
   return installCodexSkill('jev-ui',{upgrade:argv.includes('--upgrade')});
@@ -111,6 +105,10 @@ async function main() {
   if (command === 'ui' && (argv.length === 1 || (argv.length===2&&argv[1]==='--upgrade')) && argv[0] === 'install') {console.log(JSON.stringify(await installUISkill()));return;}
   if (command === 'ui' && argv.length === 1 && argv[0] === 'uninstall') {console.log(JSON.stringify(await removeCodexSkill('jev-ui')));return;}
   if (command === 'auto') {
+    if (argv[0] === 'uninstall-work-gate-v2' && argv.length === 1) {
+      const { uninstallWorkGateV2 } = await import('../src/auto-install.mjs');
+      console.log(JSON.stringify(await uninstallWorkGateV2())); return;
+    }
     if (['install-work-gate-v2','migrate-work-gate-v2'].includes(argv[0]) && argv.length === 1) {
       const { installWorkGateV2 } = await import('../src/auto-install.mjs');
       console.log(JSON.stringify(await installWorkGateV2({ replaceV1: argv[0] === 'migrate-work-gate-v2' }))); return;

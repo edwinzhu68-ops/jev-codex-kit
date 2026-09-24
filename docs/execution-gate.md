@@ -1,5 +1,11 @@
 # Task execution gate (opt-in, native trust required)
 
+**Inactive experiment (2026-09-24):** The user switched to Codex on-demand
+Jev calls after the existing Desktop UI failed to send messages with this gate
+enabled. Its CLI/app-server results do not establish Desktop compatibility.
+Normal setup does not install or enable this gate. The procedure below is kept
+for historical analysis, not as the current user workflow.
+
 This is an execution guardrail, not a claim that every client or every ongoing
 session is covered. `workflow` remains a legacy zero-inference reminder. Install
 the separate gate with `node bin/jev-kit.mjs auto install-work-gate` after ordinary
