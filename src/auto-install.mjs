@@ -10,6 +10,7 @@ import { hashText, skillCandidateSchema, assertNoSecret } from './skill-router.m
 
 const marker = 'jev-kit-auto-skills-v1';
 const gateMarker = 'jev-kit-work-gate-v1';
+const gateMarkerV2 = 'jev-kit-work-gate-v2';
 export async function installWorkGate({ home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex') } = {}) {
   const configFile = path.join(path.resolve(home), 'auto', 'config.json');
   const config = JSON.parse(await readFile(configFile, 'utf8'));
@@ -36,15 +37,49 @@ export async function installWorkGate({ home = kitHome(), codexHome = process.en
   await writeFile(file, after, { mode: 0o600 });
   return { status: 'INSTALLED_AWAITING_NATIVE_TRUST', hook_file: file, backup, note: 'New native hook definitions require review. No trust state changed; existing sessions were not restarted.' };
 }
-export function hookCommand(entry, configFile, platform = process.platform) {
-  if (platform !== 'win32') return [process.execPath, entry, configFile].map(v => commandQuote(v, platform)).join(' ');
+// v2 uses a fixed event argument so a timeout can fail open for message submit
+// while still failing closed for tool execution. It never changes native trust.
+export async function installWorkGateV2({ home = kitHome(), codexHome = process.env.CODEX_HOME || path.join(homedir(), '.codex'), replaceV1 = false } = {}) {
+  const configFile = path.join(path.resolve(home), 'auto', 'config.json');
+  const config = JSON.parse(await readFile(configFile, 'utf8'));
+  if (!Array.isArray(config.roots) || !config.roots.length) throw Error('CONFIGURE_AUTHORIZED_ROOTS_FIRST');
+  const file = path.join(codexHome, 'hooks.json');
+  const before = await readFile(file, 'utf8'), hooks = JSON.parse(before);
+  hooks.hooks ??= {};
+  const entry = fileURLToPath(new URL('../bin/jev-work-hook.mjs', import.meta.url));
+  const legacyCommand = hookCommand(entry, configFile);
+  for (const event of ['UserPromptSubmit', 'PreToolUse']) {
+    const groups = hooks.hooks[event] ?? [];
+    if (!Array.isArray(groups)) throw Error('INVALID_EXISTING_HOOKS');
+    const old = groups.filter(group => group.description === gateMarker);
+    const oldDesired = { description: gateMarker, ...(event === 'PreToolUse' ? { matcher: '.*' } : {}), hooks: [{ type: 'command', command: legacyCommand, timeout: 12 }] };
+    if (old.length && (!replaceV1 || old.length !== 1 || JSON.stringify(old[0]) !== JSON.stringify(oldDesired))) throw Error('V1_GATE_PRESENT_REQUIRES_EXPLICIT_MIGRATION');
+    const command = hookCommand(entry, configFile, process.platform, event);
+    const desired = { description: gateMarkerV2, ...(event === 'PreToolUse' ? { matcher: '.*' } : {}), hooks: [{ type: 'command', command, timeout: event === 'UserPromptSubmit' ? 5 : 12 }] };
+    const existing = groups.filter(group => group.description === gateMarkerV2);
+    if (existing.length && (existing.length !== 1 || JSON.stringify(existing[0]) !== JSON.stringify(desired))) throw Error('OWNED_GATE_CHANGED_REVIEW_REQUIRED');
+    hooks.hooks[event] = groups.filter(group => group !== old[0]);
+    if (!existing.length) hooks.hooks[event].push(desired);
+  }
+  const after = JSON.stringify(hooks, null, 2) + '\n';
+  if (after === before) return { status: 'REGISTERED_TRUST_NOT_VERIFIED', hook_file: file };
+  const backup = file + '.backup-' + randomUUID();
+  await copyFile(file, backup, constants.COPYFILE_EXCL);
+  if (await readFile(file, 'utf8') !== before) throw Error('HOOKS_CHANGED');
+  await mkdir(path.join(home, 'auto', 'inbox'), { recursive: true, mode: 0o700 });
+  await writeFile(file, after, { mode: 0o600 });
+  return { status: 'INSTALLED_AWAITING_NATIVE_TRUST', hook_file: file, backup, note: 'Distinct submit/tool hook definitions require native review. Enabled state is unchanged.' };
+}
+export function hookCommand(entry, configFile, platform = process.platform, expectedEvent = null) {
+  const args = [process.execPath, entry, configFile, ...(expectedEvent ? [expectedEvent] : [])];
+  if (platform !== 'win32') return args.map(v => commandQuote(v, platform)).join(' ');
   // Codex can run hooks through the configured PowerShell. A quoted executable
   // alone is a string expression there, not an invocation. An encoded inner
   // command preserves arguments under either cmd.exe or PowerShell.
   const shell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
   if (/[\s"'`$%&|<>^!]/.test(shell)) throw Error('UNSUPPORTED_SYSTEM_PATH');
   const literal = v => "'" + v.replaceAll("'", "''") + "'";
-  const script = '[Console]::InputEncoding=[Text.UTF8Encoding]::new();[Console]::OutputEncoding=[Text.UTF8Encoding]::new(); & ' + [process.execPath, entry, configFile].map(literal).join(' ') + '; exit $LASTEXITCODE';
+  const script = '[Console]::InputEncoding=[Text.UTF8Encoding]::new();[Console]::OutputEncoding=[Text.UTF8Encoding]::new(); & ' + args.map(literal).join(' ') + '; exit $LASTEXITCODE';
   return shell + ' -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand ' + Buffer.from(script, 'utf16le').toString('base64');
 }
 export function commandQuote(value, platform = process.platform) {

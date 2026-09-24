@@ -1,5 +1,48 @@
 # Validation record
 
+## Isolated recovery hardening — 2026-09-24 UTC
+
+The existing task-specific Jev-before-execution requirement is unchanged. The
+user's global auto switch remains **disabled** and no live hook definition,
+native trust entry, running Desktop session, or credential was changed.
+
+- The legacy v1 command retains its original ambiguous failure fallback; it
+  remains disabled. New v2 definitions pass an explicit
+  event name to distinct submit/tool commands: submit failure and timeout cannot
+  emit a tool denial, while malformed or missing tool input still denies. With
+  `enabled:false`, the handler exits before waiting for stdin to finish. The
+  legacy v1 fallback remains unchanged, and v2 migration requires new native
+  trust; neither definition has been changed in the user's installed hooks.
+- `auto status` now reports the **current** `enabled` flag and `DISABLED` status,
+  retaining the historical result separately as `last_run`. A prior
+  `WORKFLOW_REMINDER` no longer looks like a currently active route.
+- Local Windows suite: **105/105 PASS**. New isolated checks exercised both
+  event-specific failure outcomes through Node and the installed-style Windows
+  PowerShell command; the disabled handler exited with stdin still open, and
+  stalled enabled submit/tool inputs reached their distinct watchdog outcomes. V2
+  installer tests verify exact v1 migration, unrelated-hook preservation and
+  refusal of an unapproved replacement.
+- A fresh Jev review of the v2 code diff had complete input coverage but returned
+  **escalate** (composite 0.5555, safe-to-apply 0.09), with low correctness
+  confidence (0.46) and a high test-gap score (1.9/2). This is
+  advisory adverse evidence, not a passed review. Host inspection and the
+  stalled-input regression above addressed a concrete local gap; the Desktop
+  acceptance limit remains.
+- A separate Codex app-server using an isolated config directory loaded and
+  trusted both test hooks, then emitted `userPromptSubmit` started/completed for
+  a synthetic message. Its model turn failed authentication (401) because the
+  test intentionally had no account credential. This proves native hook loading,
+  **not** a completed conversational turn or Desktop send recovery. The user's
+  credential was neither copied nor linked; Windows denied an attempted
+  credential-file symlink before the test proceeded without credentials.
+- A second isolated app-server readback saw both distinct v2 hook definitions as
+  trusted. No model turn was run because the isolated profile has no auth. This
+  verifies registration and native review mechanics, not a working v2 turn.
+- Original Desktop message-send failure root cause is still unobserved. This
+  repair is not permission to run `auto enable` in the user's active profile.
+  Full acceptance still needs an isolated authenticated Desktop send and task
+  completion, plus a verified rollback path. Keep the active user route disabled.
+
 ## Desktop send interruption after enabling the gate — 2026-09-24 UTC
 
 The user reported that this existing Desktop conversation could not send a

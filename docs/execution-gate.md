@@ -8,6 +8,24 @@ edits native trust, enables bypass flags, or restarts sessions. Existing hooks a
 credentials are preserved. A running session must demonstrate that it loaded the
 new definitions before it is considered covered.
 
+After a reported Desktop message-send interruption, the user's installed gate
+was disabled with `auto disable`. Keep it disabled until a separate authenticated
+Desktop session proves that ordinary messages submit and a task completes. The
+handler's event-specific failure fix and CLI/app-server tests do not establish
+that Desktop acceptance. `auto status` reports current enablement independently
+of the last historical routing result.
+
+An experimental v2 registration uses separate, event-bound commands:
+`auto install-work-gate-v2` for an isolated install, or
+`auto migrate-work-gate-v2` to replace only exact owned v1 definitions after a
+backup. These commands do **not** enable the gate or write native trust. Both
+v2 definitions require new native review; prior v1 trust must not be reused.
+The submit command emits no tool-denial response even on malformed input or a
+timeout; the tool command still denies those failures. Existing v1 definitions
+remain unchanged unless the explicit migration command is used. V2 is not
+accepted for the user's Desktop until the authenticated send/execute/rollback
+test above passes. The original reminder hook remains a separate definition.
+
 The gate registers UserPromptSubmit and PreToolUse. It does not send the user
 message, a transcript, or a repository to the provider. Long messages and code
 blocks register a task boundary without truncation. “继续”, “开始” and “修好” retain

@@ -3,8 +3,12 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, mkdir, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { beginWork, reviewWork, closeWork, exceptionWork, workGate, authorizedWorkScope } from '../src/work-gate.mjs';
 import { prepareWork } from '../src/work-preparation.mjs';
+import { autoStatus } from '../src/auto-status.mjs';
+import { hookCommand } from '../src/auto-install.mjs';
 const denied = r => r?.hookSpecificOutput?.permissionDecision === 'deny';
 async function fixture() {
   const home = await mkdtemp(path.join(os.tmpdir(), 'jev-work-gate-'));
@@ -131,4 +135,109 @@ test('unused delegation and different multi-agent followups never count as a han
   assert(denied(await workGate(first,f.options)));
   assert.equal(await workGate({...f.event,tool_name:'multi_agent_v1wait_agent',tool_input:{}},f.options),null);
   assert.equal(await workGate({...f.event,tool_name:'Bash',tool_input:{command:'Get-FileHash issue.txt'}},f.options),null);
+});
+
+test('hook failures are specific to the event and disabled recovery never waits on stdin', async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'jev-hook-recovery-'));
+  const configFile = path.join(home, 'auto', 'config.json');
+  await mkdir(path.dirname(configFile));
+  await writeFile(configFile, JSON.stringify({ enabled: true, roots: [home] }));
+  const entry = path.resolve('bin/jev-work-hook.mjs');
+  const invalidCwd = path.join(home, 'missing');
+  for (const [eventName, shouldDeny] of [['UserPromptSubmit', false], ['PreToolUse', true]]) {
+    const input = JSON.stringify({ hook_event_name: eventName, session_id: 'recovery', cwd: invalidCwd,
+      ...(eventName === 'PreToolUse' ? { tool_name: 'Bash', tool_input: { command: 'node -e 1' } } : { prompt: 'Fix queue' }) });
+    const result = spawnSync(process.execPath, [entry, configFile], { input, encoding: 'utf8', timeout: 3000 });
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, '');
+    if (shouldDeny) assert.equal(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision, 'deny');
+    else assert.equal(result.stdout, '');
+  }
+  await writeFile(configFile, JSON.stringify({ enabled: false, roots: [home] }));
+  const child = spawn(process.execPath, [entry, configFile], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  let stdout = '', stderr = '';
+  child.stdout.on('data', chunk => { stdout += chunk; });
+  child.stderr.on('data', chunk => { stderr += chunk; });
+  const result = await Promise.race([once(child, 'exit'), new Promise((_, reject) => setTimeout(() => reject(Error('disabled hook waited for input')), 2000))]).finally(() => child.kill());
+  assert.equal(result[0], 0); assert.equal(stdout, ''); assert.equal(stderr, '');
+  const status = await autoStatus(home);
+  assert.equal(status.enabled, false); assert.equal(status.status, 'DISABLED'); assert.equal(status.last_run, null);
+  const missingSession = await autoStatus(home, 'never-seen');
+  assert.equal(missingSession.status, 'DISABLED'); assert.equal(missingSession.last_run, null);
+});
+
+test('Windows installed-style PowerShell hook does not deny message submission on local failure', { skip: process.platform !== 'win32' }, async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'jev-hook-shell-'));
+  const configFile = path.join(home, 'auto', 'config.json');
+  await mkdir(path.dirname(configFile));
+  await writeFile(configFile, JSON.stringify({ enabled: true, roots: [home] }));
+  const entry = path.resolve('bin/jev-work-hook.mjs');
+  const command = hookCommand(entry, configFile);
+  for (const [eventName, expectedDenial] of [['UserPromptSubmit', false], ['PreToolUse', true]]) {
+    const input = JSON.stringify({ hook_event_name: eventName, session_id: 'shell-test', cwd: path.join(home, 'missing'),
+      ...(eventName === 'PreToolUse' ? { tool_name: 'Bash', tool_input: { command: 'node -e 1' } } : { prompt: 'Fix queue' }) });
+    const result = spawnSync('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command],
+      { input, encoding: 'utf8', timeout: 6000, windowsHide: true });
+    assert.equal(result.status, 0); assert.equal(result.stderr, '');
+    if (expectedDenial) assert.equal(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision, 'deny');
+    else assert.equal(result.stdout, '');
+  }
+});
+
+test('event-specific v2 handler denies unknown tool input and never denies submit input', async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'jev-hook-v2-'));
+  const configFile = path.join(home, 'auto', 'config.json');
+  await mkdir(path.dirname(configFile));
+  await writeFile(configFile, JSON.stringify({ enabled: true, roots: [home] }));
+  const entry = path.resolve('bin/jev-work-hook.mjs');
+  for (const [expectedEvent, shouldDeny] of [['UserPromptSubmit', false], ['PreToolUse', true]]) {
+    const result = spawnSync(process.execPath, [entry, configFile, expectedEvent], { input: 'not json', encoding: 'utf8', timeout: 3000 });
+    assert.equal(result.status, 0); assert.equal(result.stderr, '');
+    if (shouldDeny) assert.equal(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision, 'deny');
+    else assert.equal(result.stdout, '');
+  }
+});
+
+test('event-specific v2 watchdog does not deny a stalled submit but denies a stalled tool call', async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'jev-hook-v2-timeout-'));
+  const configFile = path.join(home, 'auto', 'config.json');
+  await mkdir(path.dirname(configFile));
+  await writeFile(configFile, JSON.stringify({ enabled: true, roots: [home] }));
+  const entry = path.resolve('bin/jev-work-hook.mjs');
+  for (const [eventName, shouldDeny, deadline] of [['UserPromptSubmit', false, 4000], ['PreToolUse', true, 10000]]) {
+    const child = spawn(process.execPath, [entry, configFile, eventName], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    let stdout = '', stderr = '';
+    child.stdout.on('data', chunk => { stdout += chunk; });
+    child.stderr.on('data', chunk => { stderr += chunk; });
+    let timeout;
+    try {
+      const result = await Promise.race([
+        once(child, 'exit'),
+        new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('hook watchdog did not exit')), deadline); }),
+      ]);
+      assert.equal(result[0], 0);
+    } finally {
+      clearTimeout(timeout);
+      if (child.exitCode === null) child.kill();
+    }
+    assert.equal(stderr, '');
+    if (shouldDeny) assert.equal(JSON.parse(stdout).hookSpecificOutput.permissionDecision, 'deny');
+    else assert.equal(stdout, '');
+  }
+});
+
+test('Windows v2 installed-style commands retain event-specific failure behavior', { skip: process.platform !== 'win32' }, async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'jev-hook-v2-shell-'));
+  const configFile = path.join(home, 'auto', 'config.json');
+  await mkdir(path.dirname(configFile));
+  await writeFile(configFile, JSON.stringify({ enabled: true, roots: [home] }));
+  const entry = path.resolve('bin/jev-work-hook.mjs');
+  for (const [expectedEvent, shouldDeny] of [['UserPromptSubmit', false], ['PreToolUse', true]]) {
+    const command = hookCommand(entry, configFile, process.platform, expectedEvent);
+    const result = spawnSync('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command],
+      { input: 'not json', encoding: 'utf8', timeout: 6000, windowsHide: true });
+    assert.equal(result.status, 0); assert.equal(result.stderr, '');
+    if (shouldDeny) assert.equal(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision, 'deny');
+    else assert.equal(result.stdout, '');
+  }
 });

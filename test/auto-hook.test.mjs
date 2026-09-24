@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { prepareAuto, installAuto, installWorkGate, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
+import { prepareAuto, installAuto, installWorkGate, installWorkGateV2, commandQuote, hookCommand, refreshAuto, setAutoEnabled, setAutoMode, uninstallAuto } from '../src/auto-install.mjs';
 import { runAutoHook, eligiblePrompt, withinRoot } from '../src/auto-hook.mjs';
 
 async function fixture(mode = 'skills') {
@@ -53,6 +53,38 @@ test('work gate installation preserves trusted definitions and registers separat
   assert.equal(after.hooks.PreToolUse[0].matcher, '.*');
   assert(!JSON.stringify(after).includes('trusted_hash'));
   assert.equal((await installWorkGate(options)).status, 'REGISTERED_TRUST_NOT_VERIFIED');
+});
+
+test('event-specific gate registration preserves unrelated hooks and requires explicit v1 migration', async () => {
+  const f = await fixture();
+  const options = { home: path.dirname(path.dirname(f.installed.config_file)), codexHome: path.dirname(f.installed.hook_file) };
+  const before = JSON.parse(await readFile(f.installed.hook_file));
+  const installed = await installWorkGateV2(options);
+  assert.equal(installed.status, 'INSTALLED_AWAITING_NATIVE_TRUST');
+  const after = JSON.parse(await readFile(f.installed.hook_file));
+  assert.deepEqual(after.hooks.Stop, before.hooks.Stop);
+  assert.deepEqual(after.hooks.UserPromptSubmit[0], before.hooks.UserPromptSubmit[0]);
+  const submit = after.hooks.UserPromptSubmit.find(group => group.description === 'jev-kit-work-gate-v2');
+  const tool = after.hooks.PreToolUse.find(group => group.description === 'jev-kit-work-gate-v2');
+  assert.equal(submit.hooks[0].timeout, 5);
+  assert.equal(tool.hooks[0].timeout, 12);
+  assert.notEqual(submit.hooks[0].command, tool.hooks[0].command);
+  assert(!JSON.stringify(after).includes('trusted_hash'));
+  assert.equal((await installWorkGateV2(options)).status, 'REGISTERED_TRUST_NOT_VERIFIED');
+
+  const legacy = await fixture();
+  const migration = { home: path.dirname(path.dirname(legacy.installed.config_file)), codexHome: path.dirname(legacy.installed.hook_file) };
+  await installWorkGate(migration);
+  const oldBytes = await readFile(legacy.installed.hook_file, 'utf8');
+  await assert.rejects(installWorkGateV2(migration), /V1_GATE_PRESENT_REQUIRES_EXPLICIT_MIGRATION/);
+  assert.equal(await readFile(legacy.installed.hook_file, 'utf8'), oldBytes);
+  await installWorkGateV2({ ...migration, replaceV1: true });
+  const migrated = JSON.parse(await readFile(legacy.installed.hook_file));
+  assert.equal(migrated.hooks.UserPromptSubmit.filter(group => group.description === 'jev-kit-work-gate-v1').length, 0);
+  assert.equal(migrated.hooks.PreToolUse.filter(group => group.description === 'jev-kit-work-gate-v1').length, 0);
+  assert.equal(migrated.hooks.UserPromptSubmit.filter(group => group.description === 'jev-kit-work-gate-v2').length, 1);
+  assert.equal(migrated.hooks.PreToolUse.filter(group => group.description === 'jev-kit-work-gate-v2').length, 1);
+  assert.deepEqual(migrated.hooks.Stop, legacy.original.hooks.Stop);
 });
 
 test('mode changes preserve prior decisions and refresh preserves the selected mode', async () => {

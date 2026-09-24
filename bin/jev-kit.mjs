@@ -27,7 +27,9 @@ const help = `Jev Coding Kit 0.4.2 (repository/package: jev-codex-kit)
                                              Route a bounded, fresh skill catalog
   auto install SPEC.json                     Install silent Codex submit hook (native trust required)
   auto install-work-gate                     Add task execution checks (new native trust required)
-  auto status                                Read last private automatic routing status
+  auto install-work-gate-v2                  Install event-specific gates in a new config (native trust required)
+  auto migrate-work-gate-v2                  Replace exact v1 gates with v2 (native re-review required)
+  auto status                                Read current auto enablement and last routing result
   auto mode workflow|skills                  Local work-sharing hint (default) or paid skill routing
   auto refresh                               Explicitly repin selected skill files; preserve history
   auto enable|disable|uninstall               Manage only the owned hook
@@ -109,6 +111,10 @@ async function main() {
   if (command === 'ui' && (argv.length === 1 || (argv.length===2&&argv[1]==='--upgrade')) && argv[0] === 'install') {console.log(JSON.stringify(await installUISkill()));return;}
   if (command === 'ui' && argv.length === 1 && argv[0] === 'uninstall') {console.log(JSON.stringify(await removeCodexSkill('jev-ui')));return;}
   if (command === 'auto') {
+    if (['install-work-gate-v2','migrate-work-gate-v2'].includes(argv[0]) && argv.length === 1) {
+      const { installWorkGateV2 } = await import('../src/auto-install.mjs');
+      console.log(JSON.stringify(await installWorkGateV2({ replaceV1: argv[0] === 'migrate-work-gate-v2' }))); return;
+    }
     if (argv[0] === 'install-work-gate' && argv.length === 1) {
       const { installWorkGate } = await import('../src/auto-install.mjs');
       console.log(JSON.stringify(await installWorkGate())); return;
