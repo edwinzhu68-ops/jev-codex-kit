@@ -9,10 +9,13 @@ credentials are preserved. A running session must demonstrate that it loaded the
 new definitions before it is considered covered.
 
 After a reported Desktop message-send interruption, the user's installed gate
-was disabled with `auto disable`. Keep it disabled until a separate authenticated
-Desktop session proves that ordinary messages submit and a task completes. The
-handler's event-specific failure fix and CLI/app-server tests do not establish
-that Desktop acceptance. `auto status` reports current enablement independently
+was disabled with `auto disable`. On the user's later explicit activation
+request, v2 was migrated, natively trusted and enabled under an automatic
+rollback watchdog. Authenticated CLI and app-server turns completed with v2;
+the ongoing session also observed a real tool denial, and the first watchdog
+successfully disabled the gate. A new message sent through the existing Desktop
+UI after activation remains untested. If sending fails again, run `auto disable`
+from an external terminal. `auto status` reports current enablement independently
 of the last historical routing result.
 
 An experimental v2 registration uses separate, event-bound commands:
@@ -22,9 +25,9 @@ backup. These commands do **not** enable the gate or write native trust. Both
 v2 definitions require new native review; prior v1 trust must not be reused.
 The submit command emits no tool-denial response even on malformed input or a
 timeout; the tool command still denies those failures. Existing v1 definitions
-remain unchanged unless the explicit migration command is used. V2 is not
-accepted for the user's Desktop until the authenticated send/execute/rollback
-test above passes. The original reminder hook remains a separate definition.
+remain unchanged unless the explicit migration command is used. Current-profile
+activation is provisional until the existing Desktop UI sends a new message
+successfully. The original reminder hook remains a separate definition.
 
 The gate registers UserPromptSubmit and PreToolUse. It does not send the user
 message, a transcript, or a repository to the provider. Long messages and code

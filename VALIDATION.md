@@ -1,10 +1,41 @@
 # Validation record
 
+## User-profile v2 activation — 2026-09-24 UTC
+
+- The user's explicit activation request superseded the earlier keep-disabled
+  instruction for this activation. Exact owned v1 definitions were migrated to
+  v2 with a `hooks.json` backup; unrelated reminder hook was retained. A
+  separate app-server reviewed the two new definitions and native readback
+  reported both `trusted`. The global auto switch was enabled only under an
+  automatic disable watchdog, without restarting the ongoing Desktop session.
+- With v2 enabled, the ongoing session observed a real `PreToolUse` denial for
+  an unbound command. A fixed synthetic Codex CLI message using the existing
+  logged-in profile completed and replied `消息已收到`. A separate authenticated
+  app-server using that profile reported `userPromptSubmit` completed, a
+  completed model turn, and the same reply. Its v2 definitions were trusted.
+- The watchdog then disabled the gate automatically (exit 0); the current
+  profile was enabled again for the final authenticated app-server turn. Its
+  acceptance marker prevents the second watchdog from disabling the successful
+  activation. No credentials were copied or linked. A temporary CLI log that
+  contained an unrelated local MCP connection URL was removed immediately.
+- The activation work packet made one real `jev-1.13.0` request (4 questions,
+  3633 input / 208 output tokens). It returned `REVIEW_REQUIRED`, correctly
+  contradicting the claim that the older documentation already proved a
+  Desktop send/execute/rollback. The host retained that limitation and bound
+  exact activation actions. A prior CLI preparation attempt failed local root
+  validation before inference and was corrected without rerolling a model answer.
+- Current acceptance: native trust, authenticated CLI and app-server message
+  completion, active-session execution block, and rollback **PASS**. Sending a
+  new message through the existing Desktop UI after activation is still **NOT
+  RUN**; the next user turn is needed to observe that path. The generic
+  per-task semantic quality of Jev judgments is not established by activation.
+
 ## Isolated recovery hardening — 2026-09-24 UTC
 
-The existing task-specific Jev-before-execution requirement is unchanged. The
-user's global auto switch remains **disabled** and no live hook definition,
-native trust entry, running Desktop session, or credential was changed.
+At this isolated-hardening stage, the task-specific Jev-before-execution
+requirement was unchanged. The user's global auto switch was **disabled** and
+no live hook definition, native trust entry, running Desktop session, or
+credential had been changed. The later activation is recorded above.
 
 - The legacy v1 command retains its original ambiguous failure fallback; it
   remains disabled. New v2 definitions pass an explicit
